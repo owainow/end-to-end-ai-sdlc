@@ -475,14 +475,12 @@
             elements.weatherView.classList.add('hidden');
             elements.helpView.classList.remove('hidden');
             state.currentView = 'help';
-            window.location.hash = 'help';
         }
 
         function showWeatherView() {
             elements.helpView.classList.add('hidden');
             elements.weatherView.classList.remove('hidden');
             state.currentView = 'weather';
-            history.pushState('', document.title, window.location.pathname);
         }
 
         // ============================================
@@ -685,8 +683,12 @@
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
 
             // View navigation buttons
-            elements.helpBtn.addEventListener('click', showHelpView);
-            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
+            elements.helpBtn.addEventListener('click', () => {
+                window.location.hash = 'help';
+            });
+            elements.backToWeatherBtn.addEventListener('click', () => {
+                window.location.hash = '';
+            });
 
             // Hash routing
             window.addEventListener('hashchange', handleRouteChange);
