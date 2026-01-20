@@ -59,25 +59,41 @@
             </h1>
             
             <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+            <div class="inline-flex items-center gap-4">
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
+                
+                <!-- Help Button -->
                 <button 
-                    id="unit-metric" 
+                    id="help-btn"
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
+                    class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    title="Help & FAQ"
                 >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+                    <span class="text-lg">❓</span>
+                    <span class="hidden sm:inline text-sm font-medium">Help</span>
                 </button>
             </div>
         </header>
+        
+        <!-- Weather View -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +209,76 @@
             
         </main>
         
+        </div>
+        <!-- End Weather View -->
+        
+        <!-- Help View -->
+        <div id="help-view" class="hidden">
+            <!-- Back navigation -->
+            <button 
+                id="back-to-weather-btn"
+                type="button"
+                class="flex items-center gap-2 px-4 py-2 mb-6 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            >
+                <span>←</span>
+                <span class="font-medium">Back to Weather</span>
+            </button>
+            
+            <!-- Quick Tips Section -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Quick Tips</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 rounded-xl p-4 text-center">
+                        <div class="text-3xl mb-2">🔍</div>
+                        <h3 class="font-semibold text-gray-800 mb-1">Search Any City</h3>
+                        <p class="text-sm text-gray-600">Enter a city name to get current weather</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4 text-center">
+                        <div class="text-3xl mb-2">🌡️</div>
+                        <h3 class="font-semibold text-gray-800 mb-1">Toggle Units</h3>
+                        <p class="text-sm text-gray-600">Switch between °C and °F anytime</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-4 text-center">
+                        <div class="text-3xl mb-2">🎯</div>
+                        <h3 class="font-semibold text-gray-800 mb-1">Be Specific</h3>
+                        <p class="text-sm text-gray-600">Add country code for better accuracy</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- FAQ Section -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+                <div class="space-y-2">
+                    <details class="bg-white rounded-lg border border-gray-200">
+                        <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 font-medium text-gray-800">
+                            How do I search for a city?
+                        </summary>
+                        <div class="px-4 py-3 text-gray-600 border-t border-gray-200">
+                            Simply type the city name in the search box and click the Search button or press Enter.
+                        </div>
+                    </details>
+                    <details class="bg-white rounded-lg border border-gray-200">
+                        <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 font-medium text-gray-800">
+                            How do I change between Celsius and Fahrenheit?
+                        </summary>
+                        <div class="px-4 py-3 text-gray-600 border-t border-gray-200">
+                            Use the °C and °F buttons at the top of the page to toggle between temperature units.
+                        </div>
+                    </details>
+                    <details class="bg-white rounded-lg border border-gray-200">
+                        <summary class="px-4 py-3 cursor-pointer hover:bg-gray-50 font-medium text-gray-800">
+                            Where does the weather data come from?
+                        </summary>
+                        <div class="px-4 py-3 text-gray-600 border-t border-gray-200">
+                            Weather data is provided by OpenWeatherMap, a reliable weather data service.
+                        </div>
+                    </details>
+                </div>
+            </section>
+        </div>
+        <!-- End Help View -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -297,7 +383,15 @@
             humidity: document.getElementById('humidity'),
             windSpeed: document.getElementById('wind-speed'),
             description: document.getElementById('description'),
-            weatherIcon: document.getElementById('weather-icon')
+            weatherIcon: document.getElementById('weather-icon'),
+
+            // Views
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            
+            // Navigation buttons
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn')
         };
 
         // ============================================
@@ -427,6 +521,20 @@
             hideAllContent();
             hideLoading();
             elements.weatherCard.classList.remove('hidden');
+        }
+
+        // ============================================
+        // View Navigation Functions
+        // ============================================
+        
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+        }
+
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
         }
 
         // ============================================
@@ -615,6 +723,10 @@
 
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
+
+            // Help/Back button navigation
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
 
             // Focus search input on load
             elements.cityInput.focus();
