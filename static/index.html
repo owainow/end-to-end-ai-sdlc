@@ -46,6 +46,49 @@
                 font-size: 5rem;
             }
         }
+        
+        /* FAQ accordion styles (T009) */
+        details summary {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        details summary::before {
+            content: '›';
+            display: inline-block;
+            transition: transform 0.2s ease;
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+            color: #3B82F6;
+        }
+        
+        details[open] summary::before {
+            transform: rotate(90deg);
+        }
+        
+        details summary:hover {
+            background-color: #F3F4F6;
+        }
+        
+        /* Smooth height transition for FAQ answers */
+        details[open] .faq-answer {
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -59,25 +102,42 @@
             </h1>
             
             <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+            <div class="inline-flex gap-2 items-center">
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
+                
+                <!-- Help Button (T001) -->
                 <button 
-                    id="unit-metric" 
+                    id="help-btn" 
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
+                    class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Open help page"
                 >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                 </button>
             </div>
         </header>
+        
+        <!-- Weather View (T002) -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +253,49 @@
             
         </main>
         
+        </div><!-- End Weather View -->
+        
+        <!-- Help View (T003) -->
+        <div id="help-view" class="hidden">
+            
+            <!-- Back Navigation (T004) -->
+            <div class="mb-6">
+                <button 
+                    id="back-to-weather-btn" 
+                    type="button"
+                    class="px-4 py-2 text-sm font-medium rounded-lg bg-white hover:bg-gray-50 text-gray-700 transition-colors duration-200 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Weather
+                </button>
+            </div>
+            
+            <!-- Help Page Header -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Help & FAQ</h2>
+                <p class="text-gray-600">Everything you need to know about using the Weather App</p>
+            </div>
+            
+            <!-- Quick Tips Section (T005) -->
+            <section class="mb-12" aria-label="Quick tips">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-6">Quick Tips</h3>
+                <div id="quick-tips-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Quick tips will be rendered here by JavaScript -->
+                </div>
+            </section>
+            
+            <!-- FAQ Section (T006) -->
+            <section aria-label="Frequently asked questions">
+                <h3 class="text-2xl font-semibold text-gray-800 mb-6">Frequently Asked Questions</h3>
+                <div id="faq-container" class="space-y-8">
+                    <!-- FAQ items will be rendered here by JavaScript -->
+                </div>
+            </section>
+            
+        </div><!-- End Help View -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -210,7 +313,8 @@
             weather: null,
             units: 'metric',
             loading: false,
-            error: null
+            error: null,
+            currentView: 'weather' // T010: track current view
         };
 
         // ============================================
@@ -219,6 +323,127 @@
         const STORAGE_KEYS = {
             UNITS: 'weatherUnits'
         };
+        
+        // Quick Tips Data (T015)
+        const QUICK_TIPS = [
+            {
+                id: 'tip-search',
+                icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>`,
+                title: 'Search for Cities',
+                description: 'Enter any city name to get instant weather information. Try major cities or your hometown!'
+            },
+            {
+                id: 'tip-units',
+                icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>`,
+                title: 'Toggle Units',
+                description: 'Switch between Celsius (°C) and Fahrenheit (°F) using the toggle buttons above.'
+            },
+            {
+                id: 'tip-specific',
+                icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>`,
+                title: 'Be Specific',
+                description: 'For cities with common names, try adding the country code (e.g., "Paris, FR" or "London, UK").'
+            }
+        ];
+        
+        // FAQ Data (T015)
+        const FAQ_DATA = [
+            {
+                id: 'getting-started',
+                title: 'Getting Started',
+                icon: '🚀',
+                items: [
+                    {
+                        id: 'faq-how-to-use',
+                        question: 'How do I use the Weather App?',
+                        answer: 'Simply enter a city name in the search box and click "Search" or press Enter. The app will display current weather conditions including temperature, humidity, wind speed, and more.'
+                    },
+                    {
+                        id: 'faq-units',
+                        question: 'How do I change temperature units?',
+                        answer: 'Use the toggle buttons (°C / °F) at the top of the page. Your preference is saved automatically and will be remembered on your next visit.'
+                    },
+                    {
+                        id: 'faq-city-not-found',
+                        question: 'What if my city is not found?',
+                        answer: 'Make sure the city name is spelled correctly. For cities with common names, try adding a country code (e.g., "Springfield, US" or "Cambridge, UK"). You can also try nearby larger cities.'
+                    }
+                ]
+            },
+            {
+                id: 'weather-data',
+                title: 'Weather Data',
+                icon: '🌤️',
+                items: [
+                    {
+                        id: 'faq-data-source',
+                        question: 'Where does the weather data come from?',
+                        answer: 'All weather data is provided by OpenWeatherMap, a reliable weather data service that collects information from thousands of weather stations, satellites, and weather models worldwide.'
+                    },
+                    {
+                        id: 'faq-update-frequency',
+                        question: 'How often is weather data updated?',
+                        answer: 'Weather data is cached for 15 minutes to provide fast loading times while ensuring reasonably current information. The data from OpenWeatherMap is updated every 10 minutes from their sources.'
+                    },
+                    {
+                        id: 'faq-accuracy',
+                        question: 'How accurate is the weather information?',
+                        answer: 'OpenWeatherMap provides professional-grade weather data with high accuracy. However, weather conditions can change rapidly, and forecasts may vary. Always check official weather services for severe weather warnings.'
+                    }
+                ]
+            },
+            {
+                id: 'troubleshooting',
+                title: 'Troubleshooting',
+                icon: '🔧',
+                items: [
+                    {
+                        id: 'faq-not-loading',
+                        question: 'Why is the weather data not loading?',
+                        answer: 'Check your internet connection first. If the problem persists, the weather service might be temporarily unavailable. Try refreshing the page or waiting a few minutes before searching again.'
+                    },
+                    {
+                        id: 'faq-wrong-location',
+                        question: 'The app shows the wrong location for my city',
+                        answer: 'Some city names exist in multiple countries. Try being more specific by adding the state or country (e.g., "Portland, OR" or "Portland, ME"). You can also try using the full official name of your city.'
+                    },
+                    {
+                        id: 'faq-slow',
+                        question: 'Why is the app loading slowly?',
+                        answer: 'Initial searches may take a few seconds while fetching data from the weather service. Subsequent searches for the same city within 15 minutes will be faster due to caching. Slow internet connections can also affect loading times.'
+                    }
+                ]
+            },
+            {
+                id: 'privacy',
+                title: 'Privacy & Data',
+                icon: '🔒',
+                items: [
+                    {
+                        id: 'faq-data-collection',
+                        question: 'Does the app collect my personal data?',
+                        answer: 'The Weather App only stores your temperature unit preference (°C or °F) in your browser's local storage. We do not collect, store, or transmit any personal information. No login or account is required.'
+                    },
+                    {
+                        id: 'faq-location-tracking',
+                        question: 'Does the app track my location?',
+                        answer: 'No, the app does not use geolocation or track your physical location. You manually enter the city you want to check, giving you full control over what location data you query.'
+                    },
+                    {
+                        id: 'faq-cookies',
+                        question: 'Does the app use cookies?',
+                        answer: 'The app does not use cookies. Your temperature unit preference is stored using browser localStorage, which stays on your device and is not transmitted to any server.'
+                    }
+                ]
+            }
+        ];
 
         // OpenWeatherMap icon code to Weather Icons class mapping
         const WEATHER_ICON_MAP = {
@@ -297,7 +522,17 @@
             humidity: document.getElementById('humidity'),
             windSpeed: document.getElementById('wind-speed'),
             description: document.getElementById('description'),
-            weatherIcon: document.getElementById('weather-icon')
+            weatherIcon: document.getElementById('weather-icon'),
+            
+            // View navigation (T010)
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn'),
+            
+            // Help content containers
+            quickTipsContainer: document.getElementById('quick-tips-container'),
+            faqContainer: document.getElementById('faq-container')
         };
 
         // ============================================
@@ -339,6 +574,106 @@
          */
         function capitalizeFirst(str) {
             return str.replace(/\b\w/g, char => char.toUpperCase());
+        }
+        
+        // ============================================
+        // View Navigation Functions (T011, T012)
+        // ============================================
+        
+        /**
+         * Show the help view and hide weather view
+         */
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+            state.currentView = 'help';
+            window.location.hash = 'help';
+            
+            // Focus management for accessibility - delay to ensure DOM is ready
+            setTimeout(() => {
+                elements.backToWeatherBtn.focus();
+            }, 0);
+        }
+        
+        /**
+         * Show the weather view and hide help view
+         */
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
+            state.currentView = 'weather';
+            
+            // Clear hash without triggering hashchange
+            if (window.location.hash) {
+                history.pushState('', document.title, window.location.pathname + window.location.search);
+            }
+            
+            // Focus management for accessibility - delay to ensure DOM is ready
+            setTimeout(() => {
+                elements.cityInput.focus();
+            }, 0);
+        }
+        
+        // ============================================
+        // Help Content Rendering (T016)
+        // ============================================
+        
+        /**
+         * Render a single FAQ item
+         */
+        function renderFAQItem(item) {
+            return `
+                <details class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <summary class="px-6 py-4 font-medium text-gray-800 transition-colors">
+                        ${item.question}
+                    </summary>
+                    <div class="faq-answer px-6 pb-4 pt-2 text-gray-600 leading-relaxed">
+                        ${item.answer}
+                    </div>
+                </details>
+            `;
+        }
+        
+        /**
+         * Render a FAQ category with its items
+         */
+        function renderFAQCategory(category) {
+            const itemsHtml = category.items.map(item => renderFAQItem(item)).join('');
+            return `
+                <div class="faq-category">
+                    <h4 class="text-xl font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                        <span class="text-2xl">${category.icon}</span>
+                        ${category.title}
+                    </h4>
+                    <div class="space-y-3">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Render all FAQ categories
+         */
+        function renderFAQ() {
+            const categoriesHtml = FAQ_DATA.map(category => renderFAQCategory(category)).join('');
+            elements.faqContainer.innerHTML = categoriesHtml;
+        }
+        
+        /**
+         * Render quick tips
+         */
+        function renderQuickTips() {
+            const tipsHtml = QUICK_TIPS.map(tip => `
+                <div class="bg-blue-50 rounded-xl p-6 text-center hover:shadow-md transition-shadow">
+                    <div class="flex justify-center mb-4">
+                        ${tip.icon}
+                    </div>
+                    <h4 class="font-semibold text-gray-800 mb-2">${tip.title}</h4>
+                    <p class="text-sm text-gray-600">${tip.description}</p>
+                </div>
+            `).join('');
+            elements.quickTipsContainer.innerHTML = tipsHtml;
         }
 
         // ============================================
@@ -599,6 +934,23 @@
         function handleInputChange() {
             hideValidationError();
         }
+        
+        // ============================================
+        // Hash Routing (T013)
+        // ============================================
+        
+        /**
+         * Handle hash changes for navigation
+         */
+        function handleHashChange() {
+            const hash = window.location.hash.slice(1); // Remove the '#'
+            
+            if (hash === 'help') {
+                showHelpView();
+            } else {
+                showWeatherView();
+            }
+        }
 
         // ============================================
         // Initialization
@@ -608,6 +960,10 @@
             // Load stored preferences
             state.units = getStoredUnits();
             updateToggleUI();
+            
+            // Render help content (T016)
+            renderQuickTips();
+            renderFAQ();
 
             // Event listeners
             elements.searchForm.addEventListener('submit', handleSearch);
@@ -615,9 +971,16 @@
 
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
-
-            // Focus search input on load
-            elements.cityInput.focus();
+            
+            // Help navigation event listeners (T014)
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
+            
+            // Hash routing (T013)
+            window.addEventListener('hashchange', handleHashChange);
+            
+            // Check initial hash on load and set focus accordingly
+            handleHashChange();
         }
 
         // Start the app
