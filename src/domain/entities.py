@@ -45,20 +45,27 @@ class WeatherData:
 class WeatherRequest:
     """Request entity for weather queries."""
 
-    city: str
+    city: str = ""
     units: UnitSystem = UnitSystem.METRIC
+    coordinates: Coordinates | None = None
 
     def __post_init__(self) -> None:
         """Validate request parameters."""
-        if not self.city or not self.city.strip():
-            msg = "City name cannot be empty"
+        # Either city or coordinates must be provided
+        if not self.coordinates and (not self.city or not self.city.strip()):
+            msg = "Either city name or coordinates must be provided"
             raise ValueError(msg)
-        if len(self.city) > 100:
+        if self.city and len(self.city) > 100:
             msg = "City name cannot exceed 100 characters"
             raise ValueError(msg)
 
     @property
     def cache_key(self) -> str:
         """Generate cache key for this request."""
+        if self.coordinates:
+            # Round coordinates to 2 decimal places for cache efficiency
+            lat = round(self.coordinates.latitude, 2)
+            lon = round(self.coordinates.longitude, 2)
+            return f"weather:coords:{lat},{lon}:{self.units.value}"
         normalized_city = self.city.strip().lower()
         return f"weather:{normalized_city}:{self.units.value}"
