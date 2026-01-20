@@ -589,8 +589,10 @@
             state.currentView = 'help';
             window.location.hash = 'help';
             
-            // Focus management for accessibility
-            elements.backToWeatherBtn.focus();
+            // Focus management for accessibility - delay to ensure DOM is ready
+            setTimeout(() => {
+                elements.backToWeatherBtn.focus();
+            }, 0);
         }
         
         /**
@@ -606,8 +608,10 @@
                 history.pushState('', document.title, window.location.pathname + window.location.search);
             }
             
-            // Focus management for accessibility
-            elements.cityInput.focus();
+            // Focus management for accessibility - delay to ensure DOM is ready
+            setTimeout(() => {
+                elements.cityInput.focus();
+            }, 0);
         }
         
         // ============================================
