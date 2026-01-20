@@ -77,7 +77,21 @@
                     °F
                 </button>
             </div>
+            
+            <!-- Help Button -->
+            <button 
+                id="help-btn" 
+                class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors min-h-[44px] min-w-[44px]"
+                title="Help & FAQ"
+                aria-label="Help & FAQ"
+            >
+                <span class="text-lg">❓</span>
+                <span class="hidden sm:inline text-sm font-medium">Help</span>
+            </button>
         </header>
+        
+        <!-- Weather View (existing content) -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +207,218 @@
             
         </main>
         
+        </div><!-- End Weather View -->
+        
+        <!-- Help View -->
+        <div id="help-view" class="hidden max-w-2xl mx-auto px-4 py-6">
+            
+            <!-- Back Navigation -->
+            <button 
+                id="back-to-weather-btn" 
+                class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors mb-6 min-h-[44px]"
+                aria-label="Back to Weather"
+            >
+                <span class="text-lg">←</span>
+                <span class="font-medium">Back to Weather</span>
+            </button>
+            
+            <!-- Quick Tips Section -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">💡 Quick Tips</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Tip 1 -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <i class="wi wi-day-cloudy text-blue-500 text-5xl mb-3" aria-hidden="true"></i>
+                        <h3 class="font-semibold text-gray-800 mb-2">Search Any City</h3>
+                        <p class="text-sm text-gray-600">Enter a city name to get current weather</p>
+                    </div>
+                    <!-- Tip 2 -->
+                    <div class="bg-red-50 rounded-xl p-6 text-center">
+                        <i class="wi wi-thermometer text-red-400 text-5xl mb-3" aria-hidden="true"></i>
+                        <h3 class="font-semibold text-gray-800 mb-2">Toggle Units</h3>
+                        <p class="text-sm text-gray-600">Switch between °C and °F anytime</p>
+                    </div>
+                    <!-- Tip 3 -->
+                    <div class="bg-yellow-50 rounded-xl p-6 text-center">
+                        <i class="wi wi-stars text-yellow-500 text-5xl mb-3" aria-hidden="true"></i>
+                        <h3 class="font-semibold text-gray-800 mb-2">Be Specific</h3>
+                        <p class="text-sm text-gray-600">Add country for better accuracy</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- FAQ Section -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">❓ Frequently Asked Questions</h2>
+                
+                <!-- Category: Getting Started -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span>🚀</span>
+                        <span>Getting Started</span>
+                    </h3>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">How do I search for weather?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Enter a city name in the search box and press Enter or click the search button. The app will display current weather conditions for that location.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">How do I change temperature units?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Use the °C/°F toggle buttons at the top of the app. Your preference is saved automatically.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">What cities can I search for?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            You can search for any city worldwide. Try entering the city name, or for more accuracy, include the country (e.g., "London, UK" or "Paris, France").
+                        </div>
+                    </details>
+                </div>
+                
+                <!-- Category: Weather Data -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span>☁️</span>
+                        <span>Weather Data</span>
+                    </h3>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">Where does the weather data come from?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Our weather data is provided by OpenWeatherMap, a trusted weather data provider used by millions of applications worldwide.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">How often is the weather data updated?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Weather data is fetched in real-time when you search. The data from our provider is typically updated every 10-15 minutes.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">What does "Feels like" temperature mean?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            "Feels like" is the apparent temperature that accounts for wind chill and humidity, representing how the temperature actually feels to a person.
+                        </div>
+                    </details>
+                </div>
+                
+                <!-- Category: Troubleshooting -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span>🔧</span>
+                        <span>Troubleshooting</span>
+                    </h3>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">Why can't I find my city?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Try checking the spelling or adding the country name. Some smaller towns may not be in the database. Try a nearby larger city instead.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">Why am I seeing an error message?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            This usually means the weather service is temporarily unavailable. Please try again in a few moments. If the problem persists, check your internet connection.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">The temperature seems wrong. What should I do?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Ensure you have the correct unit selected (°C or °F). Weather stations may occasionally report unusual readings; try refreshing after a few minutes.
+                        </div>
+                    </details>
+                </div>
+                
+                <!-- Category: Privacy & Data -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span>🔒</span>
+                        <span>Privacy & Data</span>
+                    </h3>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">Does the app track my location?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            No, the app does not access your device location. You manually enter the city you want to check.
+                        </div>
+                    </details>
+                    
+                    <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                        <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors min-h-[44px]">
+                            <span class="font-medium text-gray-800">What data is stored on my device?</span>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </summary>
+                        <div class="px-4 pb-4 text-gray-600">
+                            Only your temperature unit preference (Celsius or Fahrenheit) is stored locally in your browser. No personal data is collected or stored.
+                        </div>
+                    </details>
+                </div>
+                
+            </section>
+            
+        </div><!-- End Help View -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -210,7 +436,8 @@
             weather: null,
             units: 'metric',
             loading: false,
-            error: null
+            error: null,
+            currentView: 'weather'  // 'weather' | 'help'
         };
 
         // ============================================
@@ -297,7 +524,13 @@
             humidity: document.getElementById('humidity'),
             windSpeed: document.getElementById('wind-speed'),
             description: document.getElementById('description'),
-            weatherIcon: document.getElementById('weather-icon')
+            weatherIcon: document.getElementById('weather-icon'),
+
+            // Views and navigation
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn')
         };
 
         // ============================================
@@ -601,6 +834,32 @@
         }
 
         // ============================================
+        // View Management
+        // ============================================
+        
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+            state.currentView = 'help';
+            window.location.hash = 'help';
+        }
+
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
+            state.currentView = 'weather';
+            history.pushState('', document.title, window.location.pathname);
+        }
+
+        function handleRouteChange() {
+            if (window.location.hash === '#help') {
+                showHelpView();
+            } else {
+                showWeatherView();
+            }
+        }
+
+        // ============================================
         // Initialization
         // ============================================
         
@@ -616,8 +875,18 @@
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
 
-            // Focus search input on load
-            elements.cityInput.focus();
+            // Help navigation
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
+
+            // Hash routing
+            window.addEventListener('hashchange', handleRouteChange);
+            handleRouteChange();  // Handle initial route
+
+            // Focus search input on load if on weather view
+            if (state.currentView === 'weather') {
+                elements.cityInput.focus();
+            }
         }
 
         // Start the app
