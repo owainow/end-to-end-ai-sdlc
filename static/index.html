@@ -429,7 +429,7 @@
                     {
                         id: 'faq-data-collection',
                         question: 'Does the app collect my personal data?',
-                        answer: 'The Weather App only stores your temperature unit preference (°C or °F) in your browser\'s local storage. We do not collect, store, or transmit any personal information. No login or account is required.'
+                        answer: 'The Weather App only stores your temperature unit preference (°C or °F) in your browser's local storage. We do not collect, store, or transmit any personal information. No login or account is required.'
                     },
                     {
                         id: 'faq-location-tracking',
@@ -588,6 +588,9 @@
             elements.helpView.classList.remove('hidden');
             state.currentView = 'help';
             window.location.hash = 'help';
+            
+            // Focus management for accessibility
+            elements.backToWeatherBtn.focus();
         }
         
         /**
@@ -602,6 +605,9 @@
             if (window.location.hash) {
                 history.pushState('', document.title, window.location.pathname + window.location.search);
             }
+            
+            // Focus management for accessibility
+            elements.cityInput.focus();
         }
         
         // ============================================
@@ -969,13 +975,8 @@
             // Hash routing (T013)
             window.addEventListener('hashchange', handleHashChange);
             
-            // Check initial hash on load
+            // Check initial hash on load and set focus accordingly
             handleHashChange();
-
-            // Focus search input on load (only if on weather view)
-            if (state.currentView === 'weather') {
-                elements.cityInput.focus();
-            }
         }
 
         // Start the app
