@@ -49,14 +49,14 @@
         
         /* FAQ Accordion Styles */
         details {
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease;
         }
         
         details summary {
             cursor: pointer;
             list-style: none;
             position: relative;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s ease;
         }
         
         details summary::-webkit-details-marker {
@@ -80,7 +80,7 @@
         }
         
         /* Smooth height animation for details content */
-        details > *:not(summary) {
+        details > div {
             animation: slideDown 0.3s ease;
         }
         
