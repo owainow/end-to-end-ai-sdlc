@@ -193,6 +193,25 @@
             
         </main>
         
+        <!-- Help View (hidden by default) -->
+        <div id="help-view" class="hidden max-w-2xl mx-auto">
+            <!-- Quick Tips Section -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Quick Tips</h2>
+                <div id="quick-tips-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Tips will be rendered here by renderQuickTips() -->
+                </div>
+            </section>
+            
+            <!-- FAQ Section -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+                <div id="faq-container">
+                    <!-- FAQ categories will be rendered here by renderFAQ() -->
+                </div>
+            </section>
+        </div>
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -266,6 +285,120 @@
             'wi-snow': 'text-blue-200',
             'wi-fog': 'text-gray-400'
         };
+
+        // FAQ Data
+        const FAQ_DATA = {
+            categories: [
+                {
+                    id: 'getting-started',
+                    title: 'Getting Started',
+                    icon: '🚀',
+                    items: [
+                        {
+                            id: 'gs-search',
+                            question: 'How do I search for weather?',
+                            answer: 'Enter a city name in the search box and press Enter or click the search button. The app will display current weather conditions for that location.'
+                        },
+                        {
+                            id: 'gs-units',
+                            question: 'How do I change temperature units?',
+                            answer: 'Use the °C/°F toggle buttons at the top of the app. Your preference is saved automatically.'
+                        },
+                        {
+                            id: 'gs-cities',
+                            question: 'What cities can I search for?',
+                            answer: 'You can search for any city worldwide. Try entering the city name, or for more accuracy, include the country (e.g., "London, UK" or "Paris, France").'
+                        }
+                    ]
+                },
+                {
+                    id: 'weather-data',
+                    title: 'Weather Data',
+                    icon: '☁️',
+                    items: [
+                        {
+                            id: 'wd-source',
+                            question: 'Where does the weather data come from?',
+                            answer: 'Our weather data is provided by OpenWeatherMap, a trusted weather data provider used by millions of applications worldwide.'
+                        },
+                        {
+                            id: 'wd-update',
+                            question: 'How often is the weather data updated?',
+                            answer: 'Weather data is fetched in real-time when you search. The data from our provider is typically updated every 10-15 minutes.'
+                        },
+                        {
+                            id: 'wd-feelslike',
+                            question: 'What does "Feels like" temperature mean?',
+                            answer: '"Feels like" is the apparent temperature that accounts for wind chill and humidity, representing how the temperature actually feels to a person.'
+                        }
+                    ]
+                },
+                {
+                    id: 'troubleshooting',
+                    title: 'Troubleshooting',
+                    icon: '🔧',
+                    items: [
+                        {
+                            id: 'ts-notfound',
+                            question: "Why can't I find my city?",
+                            answer: 'Try checking the spelling or adding the country name. Some smaller towns may not be in the database. Try a nearby larger city instead.'
+                        },
+                        {
+                            id: 'ts-error',
+                            question: 'Why am I seeing an error message?',
+                            answer: 'This usually means the weather service is temporarily unavailable. Please try again in a few moments. If the problem persists, check your internet connection.'
+                        },
+                        {
+                            id: 'ts-wrong',
+                            question: 'The temperature seems wrong. What should I do?',
+                            answer: 'Ensure you have the correct unit selected (°C or °F). Weather stations may occasionally report unusual readings; try refreshing after a few minutes.'
+                        }
+                    ]
+                },
+                {
+                    id: 'privacy',
+                    title: 'Privacy & Data',
+                    icon: '🔒',
+                    items: [
+                        {
+                            id: 'pv-location',
+                            question: 'Does the app track my location?',
+                            answer: 'No, the app does not access your device location. You manually enter the city you want to check.'
+                        },
+                        {
+                            id: 'pv-storage',
+                            question: 'What data is stored on my device?',
+                            answer: 'Only your temperature unit preference (Celsius or Fahrenheit) is stored locally in your browser. No personal data is collected or stored.'
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // Quick Tips Data
+        const QUICK_TIPS = [
+            {
+                id: 'tip-search',
+                title: 'Search Any City',
+                description: 'Enter a city name to get current weather',
+                icon: 'wi wi-day-cloudy',
+                iconColor: 'text-blue-500'
+            },
+            {
+                id: 'tip-units',
+                title: 'Toggle Units',
+                description: 'Switch between °C and °F anytime',
+                icon: 'wi wi-thermometer',
+                iconColor: 'text-red-400'
+            },
+            {
+                id: 'tip-accuracy',
+                title: 'Be Specific',
+                description: 'Add country for better accuracy',
+                icon: 'wi wi-stars',
+                iconColor: 'text-yellow-500'
+            }
+        ];
 
         // ============================================
         // DOM Elements
@@ -463,6 +596,76 @@
             showWeatherCard();
         }
 
+        /**
+         * Render a single FAQ item as a details/summary element
+         * @param {Object} item - FAQ item with question and answer
+         * @returns {string} HTML string
+         */
+        function renderFAQItem(item) {
+            return `
+                <details class="bg-white rounded-lg border border-gray-200 mb-2 group">
+                    <summary class="p-4 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition-colors">
+                        <span class="font-medium text-gray-800">${item.question}</span>
+                        <svg class="w-5 h-5 text-gray-500 transform transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </summary>
+                    <div class="px-4 pb-4 text-gray-600">
+                        ${item.answer}
+                    </div>
+                </details>
+            `;
+        }
+
+        /**
+         * Render a FAQ category with all its items
+         * @param {Object} category - FAQ category with title, icon, and items
+         * @returns {string} HTML string
+         */
+        function renderFAQCategory(category) {
+            const itemsHtml = category.items.map(renderFAQItem).join('');
+            return `
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <span class="text-2xl">${category.icon}</span>
+                        <span>${category.title}</span>
+                    </h3>
+                    ${itemsHtml}
+                </div>
+            `;
+        }
+
+        /**
+         * Render quick tips section
+         * Populates the quick-tips-container with tip cards
+         */
+        function renderQuickTips() {
+            const container = document.getElementById('quick-tips-container');
+            if (!container) return;
+
+            const tipsHtml = QUICK_TIPS.map(tip => `
+                <div class="bg-blue-50 rounded-xl p-4 text-center">
+                    <i class="${tip.icon} ${tip.iconColor} text-3xl mb-2 block" aria-hidden="true"></i>
+                    <h3 class="font-medium text-gray-800 mb-1">${tip.title}</h3>
+                    <p class="text-sm text-gray-600">${tip.description}</p>
+                </div>
+            `).join('');
+
+            container.innerHTML = tipsHtml;
+        }
+
+        /**
+         * Render FAQ section
+         * Populates the faq-container with all FAQ categories
+         */
+        function renderFAQ() {
+            const container = document.getElementById('faq-container');
+            if (!container) return;
+
+            const faqHtml = FAQ_DATA.categories.map(renderFAQCategory).join('');
+            container.innerHTML = faqHtml;
+        }
+
         // ============================================
         // API Functions
         // ============================================
@@ -608,6 +811,10 @@
             // Load stored preferences
             state.units = getStoredUnits();
             updateToggleUI();
+
+            // Render FAQ and Tips content
+            renderQuickTips();
+            renderFAQ();
 
             // Event listeners
             elements.searchForm.addEventListener('submit', handleSearch);
