@@ -154,6 +154,28 @@
                            transition-colors bg-white"
                     aria-describedby="search-hint"
                 >
+                <!-- Geolocation Button (T005) -->
+                <button 
+                    type="button" 
+                    id="location-btn"
+                    class="px-4 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 
+                           text-white font-medium rounded-lg transition-colors
+                           focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                           flex items-center justify-center min-w-[44px] min-h-[44px]"
+                    aria-label="Use my location"
+                    title="Use my location"
+                >
+                    <!-- Location icon (T005) -->
+                    <svg id="location-btn-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <!-- Loading spinner (T006) - hidden by default -->
+                    <svg id="location-btn-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
                 <button 
                     type="submit" 
                     id="search-btn"
@@ -314,7 +336,8 @@
             units: 'metric',
             loading: false,
             error: null,
-            currentView: 'weather' // T010: track current view
+            currentView: 'weather', // T010: track current view
+            geolocating: false // T006: track geolocation state
         };
 
         // ============================================
@@ -364,6 +387,11 @@
                         id: 'faq-how-to-use',
                         question: 'How do I use the Weather App?',
                         answer: 'Simply enter a city name in the search box and click "Search" or press Enter. The app will display current weather conditions including temperature, humidity, wind speed, and more.'
+                    },
+                    {
+                        id: 'faq-geolocation',
+                        question: 'How do I use my current location?',
+                        answer: 'Click the green location button (📍) next to the search box. Your browser will ask for permission to access your location. Once granted, the app will automatically fetch weather data for your current location. Note: Location services must be enabled on your device and browser for this feature to work.'
                     },
                     {
                         id: 'faq-units',
@@ -434,7 +462,7 @@
                     {
                         id: 'faq-location-tracking',
                         question: 'Does the app track my location?',
-                        answer: 'No, the app does not use geolocation or track your physical location. You manually enter the city you want to check, giving you full control over what location data you query.'
+                        answer: 'The app only uses geolocation when you explicitly click the location button and grant permission. Your location is used once to fetch weather data and is not stored, tracked, or transmitted anywhere else. You have full control and can deny permission at any time.'
                     },
                     {
                         id: 'faq-cookies',
@@ -503,6 +531,11 @@
             searchBtnText: document.getElementById('search-btn-text'),
             searchBtnSpinner: document.getElementById('search-btn-spinner'),
             validationMessage: document.getElementById('validation-message'),
+
+            // Geolocation button (T010)
+            locationBtn: document.getElementById('location-btn'),
+            locationBtnIcon: document.getElementById('location-btn-icon'),
+            locationBtnSpinner: document.getElementById('location-btn-spinner'),
 
             // Unit toggle
             unitMetric: document.getElementById('unit-metric'),
@@ -840,6 +873,42 @@
             }
         }
 
+        // T008: Fetch weather by coordinates
+        async function fetchWeatherByCoords(lat, lon, units) {
+            const url = `/api/v1/weather?lat=${lat}&lon=${lon}&units=${units}`;
+
+            try {
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    let errorMessage = 'Unable to get weather for your location.';
+
+                    try {
+                        const errorData = await response.json();
+                        
+                        if (response.status === 404) {
+                            errorMessage = 'Weather data not available for your location.';
+                        } else if (response.status === 429) {
+                            errorMessage = 'Too many requests. Please wait a moment and try again.';
+                        } else if (errorData.detail) {
+                            errorMessage = errorData.detail;
+                        }
+                    } catch {
+                        // JSON parsing failed, use default message
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                return await response.json();
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    throw new Error('Unable to connect. Please check your internet connection.');
+                }
+                throw error;
+            }
+        }
+
         // ============================================
         // Event Handlers
         // ============================================
@@ -936,6 +1005,111 @@
         }
         
         // ============================================
+        // Geolocation Functions (T007, T009)
+        // ============================================
+        
+        /**
+         * Handle geolocation error codes
+         */
+        function handleGeolocationError(error) {
+            let errorMessage = 'Unable to get your location.';
+            
+            switch (error.code) {
+                case 1: // PERMISSION_DENIED
+                    errorMessage = 'Location permission denied. Please enable location access in your browser settings and try again.';
+                    break;
+                case 2: // POSITION_UNAVAILABLE
+                    errorMessage = 'Location information is unavailable. Please try again or enter a city name manually.';
+                    break;
+                case 3: // TIMEOUT
+                    errorMessage = 'Location request timed out. Please try again or enter a city name manually.';
+                    break;
+                default:
+                    errorMessage = 'An unknown error occurred while getting your location. Please try entering a city name manually.';
+            }
+            
+            showError(errorMessage);
+            state.geolocating = false;
+            hideGeolocationLoading();
+        }
+        
+        /**
+         * Show loading state for geolocation button
+         */
+        function showGeolocationLoading() {
+            elements.locationBtn.disabled = true;
+            elements.searchBtn.disabled = true;
+            elements.cityInput.disabled = true;
+            elements.locationBtnIcon.classList.add('hidden');
+            elements.locationBtnSpinner.classList.remove('hidden');
+            showLoading();
+        }
+        
+        /**
+         * Hide loading state for geolocation button
+         */
+        function hideGeolocationLoading() {
+            elements.locationBtn.disabled = false;
+            elements.searchBtn.disabled = false;
+            elements.cityInput.disabled = false;
+            elements.locationBtnIcon.classList.remove('hidden');
+            elements.locationBtnSpinner.classList.add('hidden');
+            hideLoading();
+        }
+        
+        /**
+         * Handle geolocation button click (T007)
+         */
+        async function handleGeolocation() {
+            // Check if geolocation is supported
+            if (!navigator.geolocation) {
+                showError('Geolocation is not supported by your browser. Please enter a city name manually.');
+                return;
+            }
+            
+            state.geolocating = true;
+            hideValidationError();
+            showGeolocationLoading();
+            
+            // Get current position with 10 second timeout
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    try {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        
+                        // Fetch weather using coordinates
+                        const weather = await fetchWeatherByCoords(lat, lon, state.units);
+                        
+                        // Update state and UI
+                        state.weather = weather;
+                        state.city = weather.city;
+                        state.error = null;
+                        
+                        // Update city input with detected location
+                        elements.cityInput.value = weather.city;
+                        
+                        // Render weather card
+                        renderWeatherCard(weather);
+                    } catch (error) {
+                        state.error = error.message;
+                        state.weather = null;
+                        showError(error.message);
+                    } finally {
+                        state.geolocating = false;
+                        hideGeolocationLoading();
+                    }
+                },
+                handleGeolocationError,
+                {
+                    timeout: 10000,
+                    enableHighAccuracy: true,
+                    maximumAge: 0
+                }
+            );
+        }
+        
+        // ============================================
         // Hash Routing (T013)
         // ============================================
         
@@ -975,6 +1149,9 @@
             // Help navigation event listeners (T014)
             elements.helpBtn.addEventListener('click', showHelpView);
             elements.backToWeatherBtn.addEventListener('click', showWeatherView);
+            
+            // Geolocation button event listener (T010)
+            elements.locationBtn.addEventListener('click', handleGeolocation);
             
             // Hash routing (T013)
             window.addEventListener('hashchange', handleHashChange);
