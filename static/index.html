@@ -58,26 +58,42 @@
                 Weather App
             </h1>
             
-            <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+            <div class="flex items-center justify-center gap-4">
+                <!-- Unit Toggle -->
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
+                
+                <!-- Help Button -->
                 <button 
-                    id="unit-metric" 
+                    id="help-btn"
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
+                    class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    title="Help & FAQ"
                 >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+                    <span class="text-lg">❓</span>
+                    <span class="hidden sm:inline text-sm font-medium">Help</span>
                 </button>
             </div>
         </header>
+        
+        <!-- Weather View -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +209,159 @@
             
         </main>
         
+        </div>
+        <!-- End Weather View -->
+        
+        <!-- Help View -->
+        <div id="help-view" class="hidden">
+            <!-- Back Button -->
+            <button 
+                id="back-to-weather-btn"
+                type="button"
+                class="flex items-center gap-2 mb-6 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                <span class="text-lg">←</span>
+                <span class="font-medium">Back to Weather</span>
+            </button>
+            
+            <!-- Quick Tips Section -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Quick Tips</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Tip 1 -->
+                    <div class="bg-blue-50 rounded-xl p-4 text-center">
+                        <div class="text-4xl mb-2">🔍</div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Search Any City</h3>
+                        <p class="text-sm text-gray-600">Enter a city name to get current weather</p>
+                    </div>
+                    <!-- Tip 2 -->
+                    <div class="bg-blue-50 rounded-xl p-4 text-center">
+                        <div class="text-4xl mb-2">🌡️</div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Toggle Units</h3>
+                        <p class="text-sm text-gray-600">Switch between °C and °F anytime</p>
+                    </div>
+                    <!-- Tip 3 -->
+                    <div class="bg-blue-50 rounded-xl p-4 text-center">
+                        <div class="text-4xl mb-2">🌍</div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Be Specific</h3>
+                        <p class="text-sm text-gray-600">Add country code for better accuracy</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- FAQ Section -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Frequently Asked Questions</h2>
+                
+                <!-- Category: Getting Started -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span>🚀</span>
+                        <span>Getting Started</span>
+                    </h3>
+                    <div class="space-y-2">
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                How do I search for weather?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Enter a city name in the search box and press Enter or click the search button. The app will display current weather conditions for that location.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                How do I change temperature units?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Use the °C/°F toggle buttons at the top of the app. Your preference is saved automatically.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                What cities can I search for?
+                            </summary>
+                            <p class="mt-3 text-gray-600">You can search for any city worldwide. Try entering the city name, or for more accuracy, include the country (e.g., "London, UK" or "Paris, France").</p>
+                        </details>
+                    </div>
+                </div>
+                
+                <!-- Category: Weather Data -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span>☁️</span>
+                        <span>Weather Data</span>
+                    </h3>
+                    <div class="space-y-2">
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                Where does the weather data come from?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Our weather data is provided by OpenWeatherMap, a trusted weather data provider used by millions of applications worldwide.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                How often is the weather data updated?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Weather data is fetched in real-time when you search. The data from our provider is typically updated every 10-15 minutes.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                What does "Feels like" temperature mean?
+                            </summary>
+                            <p class="mt-3 text-gray-600">"Feels like" is the apparent temperature that accounts for wind chill and humidity, representing how the temperature actually feels to a person.</p>
+                        </details>
+                    </div>
+                </div>
+                
+                <!-- Category: Troubleshooting -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span>🔧</span>
+                        <span>Troubleshooting</span>
+                    </h3>
+                    <div class="space-y-2">
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                Why can't I find my city?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Try checking the spelling or adding the country name. Some smaller towns may not be in the database. Try a nearby larger city instead.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                Why am I seeing an error message?
+                            </summary>
+                            <p class="mt-3 text-gray-600">This usually means the weather service is temporarily unavailable. Please try again in a few moments. If the problem persists, check your internet connection.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                The temperature seems wrong. What should I do?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Ensure you have the correct unit selected (°C or °F). Weather stations may occasionally report unusual readings; try refreshing after a few minutes.</p>
+                        </details>
+                    </div>
+                </div>
+                
+                <!-- Category: Privacy & Data -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span>🔒</span>
+                        <span>Privacy & Data</span>
+                    </h3>
+                    <div class="space-y-2">
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                Does the app track my location?
+                            </summary>
+                            <p class="mt-3 text-gray-600">No, the app does not access your device location. You manually enter the city you want to check.</p>
+                        </details>
+                        <details class="bg-white rounded-lg border border-gray-200 p-4">
+                            <summary class="cursor-pointer font-medium text-gray-800 hover:text-blue-600">
+                                What data is stored on my device?
+                            </summary>
+                            <p class="mt-3 text-gray-600">Only your temperature unit preference (Celsius or Fahrenheit) is stored locally in your browser. No personal data is collected or stored.</p>
+                        </details>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <!-- End Help View -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -210,7 +379,8 @@
             weather: null,
             units: 'metric',
             loading: false,
-            error: null
+            error: null,
+            currentView: 'weather'
         };
 
         // ============================================
@@ -282,6 +452,14 @@
             // Unit toggle
             unitMetric: document.getElementById('unit-metric'),
             unitImperial: document.getElementById('unit-imperial'),
+
+            // Views
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            
+            // Navigation
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn'),
 
             // Content areas
             welcomeMessage: document.getElementById('welcome-message'),
@@ -601,6 +779,33 @@
         }
 
         // ============================================
+        // View Navigation
+        // ============================================
+        
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+            state.currentView = 'help';
+            window.location.hash = 'help';
+        }
+        
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
+            state.currentView = 'weather';
+            // Clear hash without adding to history
+            history.pushState('', document.title, window.location.pathname + window.location.search);
+        }
+        
+        function handleRouteChange() {
+            if (window.location.hash === '#help') {
+                showHelpView();
+            } else {
+                showWeatherView();
+            }
+        }
+
+        // ============================================
         // Initialization
         // ============================================
         
@@ -616,8 +821,20 @@
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
 
-            // Focus search input on load
-            elements.cityInput.focus();
+            // Navigation event listeners
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
+            
+            // Hash routing
+            window.addEventListener('hashchange', handleRouteChange);
+            
+            // Handle initial route
+            handleRouteChange();
+
+            // Focus search input on load if on weather view
+            if (state.currentView === 'weather') {
+                elements.cityInput.focus();
+            }
         }
 
         // Start the app
