@@ -844,7 +844,7 @@
             elements.weatherView.classList.add('hidden');
             elements.helpView.classList.remove('hidden');
             state.currentView = 'help';
-            history.pushState({ view: 'help' }, 'Help & FAQ', '#help');
+            history.pushState(null, '', '#help');
         }
 
         function showWeatherView() {
@@ -852,7 +852,7 @@
             elements.weatherView.classList.remove('hidden');
             state.currentView = 'weather';
             if (window.location.hash) {
-                history.pushState(null, document.title, window.location.pathname);
+                history.pushState(null, '', window.location.pathname);
             }
         }
 
@@ -861,7 +861,7 @@
                 showHelpView();
             } else {
                 showWeatherView();
-                // Focus search input when on weather view
+                // Focus search input for better UX when returning to weather view
                 elements.cityInput.focus();
             }
         }
