@@ -225,7 +225,7 @@
             <!-- Quick Tips Section -->
             <section class="mb-8">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">💡 Quick Tips</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <!-- Tip 1 -->
                     <div class="bg-blue-50 rounded-xl p-6 text-center">
                         <i class="wi wi-day-cloudy text-blue-500 text-5xl mb-3" aria-hidden="true"></i>
@@ -848,7 +848,9 @@
             elements.helpView.classList.add('hidden');
             elements.weatherView.classList.remove('hidden');
             state.currentView = 'weather';
-            history.pushState('', document.title, window.location.pathname);
+            if (window.location.hash) {
+                history.pushState(null, document.title, window.location.pathname);
+            }
         }
 
         function handleRouteChange() {
@@ -856,6 +858,8 @@
                 showHelpView();
             } else {
                 showWeatherView();
+                // Focus search input when on weather view
+                elements.cityInput.focus();
             }
         }
 
@@ -882,11 +886,6 @@
             // Hash routing
             window.addEventListener('hashchange', handleRouteChange);
             handleRouteChange();  // Handle initial route
-
-            // Focus search input on load if on weather view
-            if (state.currentView === 'weather') {
-                elements.cityInput.focus();
-            }
         }
 
         // Start the app
