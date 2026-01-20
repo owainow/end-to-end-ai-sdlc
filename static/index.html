@@ -59,25 +59,36 @@
             </h1>
             
             <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
-                <button 
-                    id="unit-metric" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
-                >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+            <div class="inline-flex gap-2 items-center">
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
+                
+                <!-- Help Button -->
+                <button id="help-btn" class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors" title="Help & FAQ">
+                    <span class="text-lg">❓</span>
+                    <span class="hidden sm:inline text-sm font-medium">Help</span>
                 </button>
             </div>
         </header>
+        
+        <!-- Weather View -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +204,21 @@
             
         </main>
         
+        </div>
+        <!-- End Weather View -->
+        
+        <!-- Help View -->
+        <div id="help-view" class="hidden">
+            <div class="text-center py-12">
+                <button id="back-to-weather-btn" class="mb-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    ← Back to Weather
+                </button>
+                <h2 class="text-2xl font-bold text-gray-800">Help & FAQ</h2>
+                <p class="text-gray-600 mt-4">Help content coming soon...</p>
+            </div>
+        </div>
+        <!-- End Help View -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -210,7 +236,8 @@
             weather: null,
             units: 'metric',
             loading: false,
-            error: null
+            error: null,
+            currentView: 'weather'
         };
 
         // ============================================
@@ -297,7 +324,13 @@
             humidity: document.getElementById('humidity'),
             windSpeed: document.getElementById('wind-speed'),
             description: document.getElementById('description'),
-            weatherIcon: document.getElementById('weather-icon')
+            weatherIcon: document.getElementById('weather-icon'),
+
+            // Views
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn')
         };
 
         // ============================================
@@ -427,6 +460,24 @@
             hideAllContent();
             hideLoading();
             elements.weatherCard.classList.remove('hidden');
+        }
+
+        // ============================================
+        // View Switching Functions
+        // ============================================
+        
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+            state.currentView = 'help';
+            window.location.hash = 'help';
+        }
+
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
+            state.currentView = 'weather';
+            history.pushState('', document.title, window.location.pathname);
         }
 
         // ============================================
@@ -601,6 +652,18 @@
         }
 
         // ============================================
+        // Hash Routing
+        // ============================================
+        
+        function handleRouteChange() {
+            if (window.location.hash === '#help') {
+                showHelpView();
+            } else {
+                showWeatherView();
+            }
+        }
+
+        // ============================================
         // Initialization
         // ============================================
         
@@ -616,8 +679,18 @@
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
 
-            // Focus search input on load
-            elements.cityInput.focus();
+            // View navigation buttons
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
+
+            // Hash routing
+            window.addEventListener('hashchange', handleRouteChange);
+            handleRouteChange(); // Handle initial route
+
+            // Focus search input on load (only if on weather view)
+            if (window.location.hash !== '#help') {
+                elements.cityInput.focus();
+            }
         }
 
         // Start the app
