@@ -79,6 +79,8 @@
             </div>
         </header>
         
+        <!-- Weather View -->
+        <div id="weather-view">
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
             <form id="search-form" class="flex gap-2">
@@ -192,6 +194,14 @@
             </div>
             
         </main>
+        </div>
+        <!-- End Weather View -->
+        
+        <!-- Help View -->
+        <div id="help-view" class="hidden">
+            <p class="text-center text-gray-500">Help content will go here</p>
+        </div>
+        <!-- End Help View -->
         
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
@@ -210,7 +220,8 @@
             weather: null,
             units: 'metric',
             loading: false,
-            error: null
+            error: null,
+            currentView: 'weather'
         };
 
         // ============================================
@@ -284,6 +295,8 @@
             unitImperial: document.getElementById('unit-imperial'),
 
             // Content areas
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
             welcomeMessage: document.getElementById('welcome-message'),
             loadingSpinner: document.getElementById('loading-spinner'),
             errorContainer: document.getElementById('error-container'),
@@ -427,6 +440,21 @@
             hideAllContent();
             hideLoading();
             elements.weatherCard.classList.remove('hidden');
+        }
+
+        // ============================================
+        // View Management Functions
+        // ============================================
+        
+        /**
+         * Show the weather view and hide the help view
+         * Updates state and clears URL hash
+         */
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
+            state.currentView = 'weather';
+            history.pushState('', document.title, window.location.pathname);
         }
 
         // ============================================
