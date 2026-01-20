@@ -58,26 +58,41 @@
                 Weather App
             </h1>
             
-            <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+            <!-- Unit Toggle and Help Button -->
+            <div class="flex items-center justify-center gap-4">
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
                 <button 
-                    id="unit-metric" 
+                    id="help-btn" 
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
+                    class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1" 
+                    title="Help & FAQ"
+                    aria-label="Help & FAQ"
                 >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+                    <span class="text-lg">❓</span>
+                    <span class="hidden sm:inline text-sm font-medium">Help</span>
                 </button>
             </div>
         </header>
+        
+        <!-- Weather View (default) -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +208,69 @@
             
         </main>
         
+        </div><!-- End of weather-view -->
+        
+        <!-- Help View (hidden by default) -->
+        <div id="help-view" class="hidden">
+            <div class="mb-6">
+                <button 
+                    id="back-to-weather-btn" 
+                    type="button"
+                    class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-lg"
+                    aria-label="Back to weather"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span class="font-medium">Back to Weather</span>
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">Help & FAQ</h2>
+                <p class="text-gray-600 mb-4">Welcome to the Weather App help page. Here you'll find answers to common questions and tips for using the app.</p>
+                
+                <!-- Quick Tips -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Quick Tips</h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Enter a city name to see current weather conditions</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Toggle between Celsius (°C) and Fahrenheit (°F) using the buttons in the header</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-500 mt-1">•</span>
+                            <span>Weather data is provided by OpenWeatherMap</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- FAQ Section -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Frequently Asked Questions</h3>
+                    
+                    <details class="bg-gray-50 rounded-lg p-4 cursor-pointer">
+                        <summary class="font-medium text-gray-800">How do I search for weather?</summary>
+                        <p class="mt-2 text-gray-600">Simply type a city name in the search box and press Enter or click the Search button.</p>
+                    </details>
+                    
+                    <details class="bg-gray-50 rounded-lg p-4 cursor-pointer">
+                        <summary class="font-medium text-gray-800">Can I change the temperature unit?</summary>
+                        <p class="mt-2 text-gray-600">Yes! Use the °C and °F buttons at the top of the page to switch between Celsius and Fahrenheit.</p>
+                    </details>
+                    
+                    <details class="bg-gray-50 rounded-lg p-4 cursor-pointer">
+                        <summary class="font-medium text-gray-800">Where does the weather data come from?</summary>
+                        <p class="mt-2 text-gray-600">Weather data is provided by OpenWeatherMap, a reliable weather data service.</p>
+                    </details>
+                </div>
+            </div>
+        </div><!-- End of help-view -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -210,7 +288,8 @@
             weather: null,
             units: 'metric',
             loading: false,
-            error: null
+            error: null,
+            currentView: 'weather'
         };
 
         // ============================================
@@ -282,6 +361,12 @@
             // Unit toggle
             unitMetric: document.getElementById('unit-metric'),
             unitImperial: document.getElementById('unit-imperial'),
+
+            // View management
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn'),
 
             // Content areas
             welcomeMessage: document.getElementById('welcome-message'),
@@ -427,6 +512,24 @@
             hideAllContent();
             hideLoading();
             elements.weatherCard.classList.remove('hidden');
+        }
+
+        // ============================================
+        // View Management Functions
+        // ============================================
+        
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+            state.currentView = 'help';
+            window.location.hash = 'help';
+        }
+
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
+            state.currentView = 'weather';
+            history.pushState('', document.title, window.location.pathname);
         }
 
         // ============================================
@@ -615,6 +718,10 @@
 
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
+
+            // View navigation
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
 
             // Focus search input on load
             elements.cityInput.focus();
