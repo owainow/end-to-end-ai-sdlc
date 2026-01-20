@@ -116,6 +116,9 @@
             <p id="validation-message" class="hidden mt-2 text-sm text-red-600" role="alert"></p>
         </section>
         
+        <!-- Weather View Container -->
+        <div id="weather-view">
+        
         <!-- Content Area -->
         <main id="content-area">
             
@@ -192,6 +195,56 @@
             </div>
             
         </main>
+        
+        </div>
+        <!-- End Weather View -->
+        
+        <!-- Help View Container -->
+        <div id="help-view" class="hidden">
+            
+            <!-- Back Navigation -->
+            <div class="mb-6">
+                <button 
+                    id="back-to-weather-btn"
+                    class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                    <span class="text-lg">←</span>
+                    <span class="font-medium">Back to Weather</span>
+                </button>
+            </div>
+            
+            <!-- Quick Tips Section -->
+            <section class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Tips</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <!-- Tip Card 1: Search -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <div class="text-4xl mb-3">🔍</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Search Any City</h3>
+                        <p class="text-sm text-gray-600">Enter a city name to get current weather</p>
+                    </div>
+                    
+                    <!-- Tip Card 2: Unit Toggle -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <div class="text-4xl mb-3">🌡️</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Toggle Units</h3>
+                        <p class="text-sm text-gray-600">Switch between °C and °F anytime</p>
+                    </div>
+                    
+                    <!-- Tip Card 3: City Specificity -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <div class="text-4xl mb-3">🌍</div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Be Specific</h3>
+                        <p class="text-sm text-gray-600">Add country code for better accuracy</p>
+                    </div>
+                    
+                </div>
+            </section>
+            
+        </div>
+        <!-- End Help View -->
         
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
