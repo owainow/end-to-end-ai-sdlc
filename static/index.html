@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Weather Icons CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
+    
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#6B7280',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom animations and styles */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Weather icon sizing */
+        .weather-icon-large {
+            font-size: 4rem;
+        }
+        
+        @media (min-width: 768px) {
+            .weather-icon-large {
+                font-size: 5rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-lg">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                <i class="wi wi-day-sunny text-yellow-500 mr-2"></i>
+                Weather App
+            </h1>
+            
+            <!-- Unit Toggle -->
+            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                <button 
+                    id="unit-metric" 
+                    type="button"
+                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    aria-pressed="true"
+                >
+                    °C
+                </button>
+                <button 
+                    id="unit-imperial" 
+                    type="button"
+                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    aria-pressed="false"
+                >
+                    °F
+                </button>
+            </div>
+        </header>
+        
+        <!-- Search Section -->
+        <section class="mb-8" aria-label="City search">
+            <form id="search-form" class="flex gap-2">
+                <label for="city-search" class="sr-only">Enter city name</label>
+                <input 
+                    type="text" 
+                    id="city-search" 
+                    name="city"
+                    placeholder="Enter city name..."
+                    autocomplete="off"
+                    class="flex-1 px-4 py-3 text-lg border-2 border-gray-200 rounded-lg 
+                           focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none 
+                           transition-colors bg-white"
+                    aria-describedby="search-hint"
+                >
+                <button 
+                    type="submit" 
+                    id="search-btn"
+                    class="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 
+                           text-white font-medium rounded-lg transition-colors
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                           flex items-center justify-center min-w-[100px]"
+                >
+                    <span id="search-btn-text">Search</span>
+                    <!-- Loading spinner for button (hidden by default) -->
+                    <svg id="search-btn-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+            <span id="search-hint" class="sr-only">Press Enter or click Search to find weather</span>
+            
+            <!-- Validation Message -->
+            <p id="validation-message" class="hidden mt-2 text-sm text-red-600" role="alert"></p>
+        </section>
+        
+        <!-- Content Area -->
+        <main id="content-area">
+            
+            <!-- Welcome Message (initial state) -->
+            <div id="welcome-message" class="text-center py-12 text-gray-500">
+                <i class="wi wi-day-cloudy text-6xl text-gray-300 mb-4 block"></i>
+                <p class="text-lg">Enter a city name to see the weather</p>
+            </div>
+            
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="hidden py-12">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mb-4"></div>
+                    <p class="text-gray-500">Fetching weather data...</p>
+                </div>
+            </div>
+            
+            <!-- Error Container -->
+            <div id="error-container" class="hidden fade-in">
+                <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                    <div class="flex items-start">
+                        <svg class="h-6 w-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <h3 class="text-red-800 font-medium">Unable to get weather</h3>
+                            <p id="error-message" class="text-red-700 mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Weather Card -->
+            <div id="weather-card" class="hidden fade-in">
+                <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                    
+                    <!-- Location Header -->
+                    <div class="text-center mb-6">
+                        <h2 id="city-name" class="text-2xl md:text-3xl font-semibold text-gray-800"></h2>
+                    </div>
+                    
+                    <!-- Main Weather Display -->
+                    <div class="flex items-center justify-center gap-4 mb-6">
+                        <i id="weather-icon" class="weather-icon-large text-blue-500" aria-hidden="true"></i>
+                        <div class="text-center">
+                            <span id="temperature" class="text-5xl md:text-7xl font-bold text-gray-800"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Feels Like -->
+                    <p id="feels-like" class="text-center text-gray-500 mb-6"></p>
+                    
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <!-- Humidity -->
+                        <div class="bg-blue-50 rounded-xl p-4 text-center">
+                            <i class="wi wi-humidity text-blue-400 text-3xl mb-2" aria-hidden="true"></i>
+                            <p id="humidity" class="text-xl font-semibold text-gray-800"></p>
+                            <p class="text-sm text-gray-500">Humidity</p>
+                        </div>
+                        
+                        <!-- Wind -->
+                        <div class="bg-gray-50 rounded-xl p-4 text-center">
+                            <i class="wi wi-strong-wind text-gray-400 text-3xl mb-2" aria-hidden="true"></i>
+                            <p id="wind-speed" class="text-xl font-semibold text-gray-800"></p>
+                            <p class="text-sm text-gray-500">Wind</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Weather Description -->
+                    <p id="description" class="text-center text-xl text-gray-600 capitalize"></p>
+                    
+                </div>
+            </div>
+            
+        </main>
+        
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-sm text-gray-400">
+            <p>Powered by OpenWeatherMap</p>
+        </footer>
+        
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ============================================
+        // State Management
+        // ============================================
+        const state = {
+            city: '',
+            weather: null,
+            units: 'metric',
+            loading: false,
+            error: null
+        };
+
+        // ============================================
+        // Constants
+        // ============================================
+        const STORAGE_KEYS = {
+            UNITS: 'weatherUnits'
+        };
+
+        // OpenWeatherMap icon code to Weather Icons class mapping
+        const WEATHER_ICON_MAP = {
+            // Clear
+            '01d': 'wi-day-sunny',
+            '01n': 'wi-night-clear',
+            // Few clouds
+            '02d': 'wi-day-cloudy',
+            '02n': 'wi-night-alt-cloudy',
+            // Scattered clouds
+            '03d': 'wi-cloud',
+            '03n': 'wi-cloud',
+            // Broken clouds
+            '04d': 'wi-cloudy',
+            '04n': 'wi-cloudy',
+            // Shower rain
+            '09d': 'wi-showers',
+            '09n': 'wi-showers',
+            // Rain
+            '10d': 'wi-day-rain',
+            '10n': 'wi-night-alt-rain',
+            // Thunderstorm
+            '11d': 'wi-thunderstorm',
+            '11n': 'wi-thunderstorm',
+            // Snow
+            '13d': 'wi-snow',
+            '13n': 'wi-snow',
+            // Mist/Fog
+            '50d': 'wi-fog',
+            '50n': 'wi-fog'
+        };
+
+        // Icon colors based on weather type
+        const WEATHER_ICON_COLORS = {
+            'wi-day-sunny': 'text-yellow-500',
+            'wi-night-clear': 'text-indigo-400',
+            'wi-day-cloudy': 'text-gray-400',
+            'wi-night-alt-cloudy': 'text-gray-500',
+            'wi-cloud': 'text-gray-400',
+            'wi-cloudy': 'text-gray-500',
+            'wi-showers': 'text-blue-400',
+            'wi-day-rain': 'text-blue-500',
+            'wi-night-alt-rain': 'text-blue-600',
+            'wi-thunderstorm': 'text-purple-500',
+            'wi-snow': 'text-blue-200',
+            'wi-fog': 'text-gray-400'
+        };
+
+        // ============================================
+        // DOM Elements
+        // ============================================
+        const elements = {
+            // Search
+            searchForm: document.getElementById('search-form'),
+            cityInput: document.getElementById('city-search'),
+            searchBtn: document.getElementById('search-btn'),
+            searchBtnText: document.getElementById('search-btn-text'),
+            searchBtnSpinner: document.getElementById('search-btn-spinner'),
+            validationMessage: document.getElementById('validation-message'),
+
+            // Unit toggle
+            unitMetric: document.getElementById('unit-metric'),
+            unitImperial: document.getElementById('unit-imperial'),
+
+            // Content areas
+            welcomeMessage: document.getElementById('welcome-message'),
+            loadingSpinner: document.getElementById('loading-spinner'),
+            errorContainer: document.getElementById('error-container'),
+            errorMessage: document.getElementById('error-message'),
+            weatherCard: document.getElementById('weather-card'),
+
+            // Weather data
+            cityName: document.getElementById('city-name'),
+            temperature: document.getElementById('temperature'),
+            feelsLike: document.getElementById('feels-like'),
+            humidity: document.getElementById('humidity'),
+            windSpeed: document.getElementById('wind-speed'),
+            description: document.getElementById('description'),
+            weatherIcon: document.getElementById('weather-icon')
+        };
+
+        // ============================================
+        // Utility Functions
+        // ============================================
+        
+        /**
+         * Get Weather Icons class for an icon code
+         */
+        function getWeatherIconClass(iconCode) {
+            return WEATHER_ICON_MAP[iconCode] || 'wi-na';
+        }
+
+        /**
+         * Get icon color class
+         */
+        function getIconColorClass(iconClass) {
+            return WEATHER_ICON_COLORS[iconClass] || 'text-blue-500';
+        }
+
+        /**
+         * Format temperature with unit
+         */
+        function formatTemperature(temp, units) {
+            const symbol = units === 'metric' ? '°C' : '°F';
+            return `${Math.round(temp)}${symbol}`;
+        }
+
+        /**
+         * Format wind speed with unit
+         */
+        function formatWindSpeed(speed, units) {
+            const unit = units === 'metric' ? 'm/s' : 'mph';
+            return `${speed} ${unit}`;
+        }
+
+        /**
+         * Capitalize first letter of each word
+         */
+        function capitalizeFirst(str) {
+            return str.replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        // ============================================
+        // localStorage Functions
+        // ============================================
+        
+        function getStoredUnits() {
+            return localStorage.getItem(STORAGE_KEYS.UNITS) || 'metric';
+        }
+
+        function saveUnits(units) {
+            localStorage.setItem(STORAGE_KEYS.UNITS, units);
+        }
+
+        // ============================================
+        // Validation Functions
+        // ============================================
+        
+        function validateCityInput(city) {
+            const trimmed = city.trim();
+
+            if (!trimmed) {
+                return { valid: false, error: 'Please enter a city name' };
+            }
+
+            if (trimmed.length < 2) {
+                return { valid: false, error: 'City name is too short' };
+            }
+
+            if (trimmed.length > 100) {
+                return { valid: false, error: 'City name is too long' };
+            }
+
+            return { valid: true, error: null };
+        }
+
+        function showValidationError(message) {
+            elements.validationMessage.textContent = message;
+            elements.validationMessage.classList.remove('hidden');
+        }
+
+        function hideValidationError() {
+            elements.validationMessage.classList.add('hidden');
+        }
+
+        // ============================================
+        // Content State Functions
+        // ============================================
+        
+        function hideAllContent() {
+            elements.welcomeMessage.classList.add('hidden');
+            elements.loadingSpinner.classList.add('hidden');
+            elements.errorContainer.classList.add('hidden');
+            elements.weatherCard.classList.add('hidden');
+        }
+
+        function showWelcome() {
+            hideAllContent();
+            elements.welcomeMessage.classList.remove('hidden');
+        }
+
+        function showLoading() {
+            hideAllContent();
+            elements.loadingSpinner.classList.remove('hidden');
+            
+            // Update button state
+            elements.searchBtn.disabled = true;
+            elements.searchBtnText.classList.add('hidden');
+            elements.searchBtnSpinner.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            elements.searchBtn.disabled = false;
+            elements.searchBtnText.classList.remove('hidden');
+            elements.searchBtnSpinner.classList.add('hidden');
+        }
+
+        function showError(message) {
+            hideAllContent();
+            hideLoading();
+            elements.errorMessage.textContent = message;
+            elements.errorContainer.classList.remove('hidden');
+        }
+
+        function showWeatherCard() {
+            hideAllContent();
+            hideLoading();
+            elements.weatherCard.classList.remove('hidden');
+        }
+
+        // ============================================
+        // Render Functions
+        // ============================================
+        
+        function renderWeatherCard(weather) {
+            // Location
+            elements.cityName.textContent = `${weather.city}, ${weather.country}`;
+
+            // Temperature
+            elements.temperature.textContent = formatTemperature(weather.temperature, weather.units);
+
+            // Feels like
+            elements.feelsLike.textContent = `Feels like ${formatTemperature(weather.feels_like, weather.units)}`;
+
+            // Humidity
+            elements.humidity.textContent = `${weather.humidity}%`;
+
+            // Wind speed
+            elements.windSpeed.textContent = formatWindSpeed(weather.wind_speed, weather.units);
+
+            // Description
+            elements.description.textContent = capitalizeFirst(weather.description);
+
+            // Weather icon
+            const iconClass = getWeatherIconClass(weather.icon_code);
+            const colorClass = getIconColorClass(iconClass);
+            
+            // Clear previous classes and set new ones
+            elements.weatherIcon.className = `wi ${iconClass} ${colorClass} weather-icon-large`;
+            elements.weatherIcon.setAttribute('aria-label', weather.description);
+
+            showWeatherCard();
+        }
+
+        // ============================================
+        // API Functions
+        // ============================================
+        
+        async function fetchWeather(city, units) {
+            const url = `/api/v1/weather?city=${encodeURIComponent(city)}&units=${units}`;
+
+            try {
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    let errorMessage = 'Something went wrong. Please try again.';
+
+                    try {
+                        const errorData = await response.json();
+                        
+                        if (response.status === 404) {
+                            errorMessage = errorData.detail || 'City not found. Please check the spelling and try again.';
+                        } else if (response.status === 429) {
+                            errorMessage = 'Too many requests. Please wait a moment and try again.';
+                        } else if (response.status === 502) {
+                            errorMessage = 'Weather service is temporarily unavailable. Please try again later.';
+                        } else if (errorData.detail) {
+                            errorMessage = errorData.detail;
+                        }
+                    } catch {
+                        // JSON parsing failed, use default message
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                return await response.json();
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    // Network error
+                    throw new Error('Unable to connect. Please check your internet connection.');
+                }
+                throw error;
+            }
+        }
+
+        // ============================================
+        // Event Handlers
+        // ============================================
+        
+        async function handleSearch(event) {
+            event.preventDefault();
+            hideValidationError();
+
+            const city = elements.cityInput.value;
+            const validation = validateCityInput(city);
+
+            if (!validation.valid) {
+                showValidationError(validation.error);
+                return;
+            }
+
+            state.city = city.trim();
+            state.loading = true;
+            showLoading();
+
+            try {
+                const weather = await fetchWeather(state.city, state.units);
+                state.weather = weather;
+                state.error = null;
+                renderWeatherCard(weather);
+            } catch (error) {
+                state.error = error.message;
+                state.weather = null;
+                showError(error.message);
+            } finally {
+                state.loading = false;
+            }
+        }
+
+        async function handleUnitChange(newUnits) {
+            if (newUnits === state.units) return;
+
+            state.units = newUnits;
+            saveUnits(newUnits);
+            updateToggleUI();
+
+            // Re-fetch weather if we have a city
+            if (state.city && state.weather) {
+                state.loading = true;
+                showLoading();
+
+                try {
+                    const weather = await fetchWeather(state.city, state.units);
+                    state.weather = weather;
+                    state.error = null;
+                    renderWeatherCard(weather);
+                } catch (error) {
+                    state.error = error.message;
+                    showError(error.message);
+                } finally {
+                    state.loading = false;
+                }
+            }
+        }
+
+        function updateToggleUI() {
+            const activeClasses = ['bg-blue-500', 'text-white'];
+            const inactiveClasses = ['bg-white', 'text-gray-700', 'hover:bg-gray-50'];
+
+            if (state.units === 'metric') {
+                // Metric active
+                elements.unitMetric.classList.remove(...inactiveClasses);
+                elements.unitMetric.classList.add(...activeClasses);
+                elements.unitMetric.setAttribute('aria-pressed', 'true');
+
+                // Imperial inactive
+                elements.unitImperial.classList.remove(...activeClasses);
+                elements.unitImperial.classList.add(...inactiveClasses);
+                elements.unitImperial.setAttribute('aria-pressed', 'false');
+            } else {
+                // Imperial active
+                elements.unitImperial.classList.remove(...inactiveClasses);
+                elements.unitImperial.classList.add(...activeClasses);
+                elements.unitImperial.setAttribute('aria-pressed', 'true');
+
+                // Metric inactive
+                elements.unitMetric.classList.remove(...activeClasses);
+                elements.unitMetric.classList.add(...inactiveClasses);
+                elements.unitMetric.setAttribute('aria-pressed', 'false');
+            }
+        }
+
+        // ============================================
+        // Input Handling
+        // ============================================
+        
+        function handleInputChange() {
+            hideValidationError();
+        }
+
+        // ============================================
+        // Initialization
+        // ============================================
+        
+        function init() {
+            // Load stored preferences
+            state.units = getStoredUnits();
+            updateToggleUI();
+
+            // Event listeners
+            elements.searchForm.addEventListener('submit', handleSearch);
+            elements.cityInput.addEventListener('input', handleInputChange);
+
+            elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
+            elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
+
+            // Focus search input on load
+            elements.cityInput.focus();
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

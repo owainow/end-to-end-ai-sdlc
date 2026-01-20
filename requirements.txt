@@ -1,0 +1,18 @@
+# Weather App Dependencies
+# Generated from pyproject.toml - pin versions for reproducibility
+
+# Core
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+httpx==0.26.0
+pydantic==2.6.1
+pydantic-settings==2.1.0
+python-dotenv==1.0.1
+structlog==24.1.0
+
+# Development
+pytest==7.4.4
+pytest-asyncio==0.23.4
+pytest-cov==4.1.0
+ruff==0.2.1
+mypy==1.8.0
