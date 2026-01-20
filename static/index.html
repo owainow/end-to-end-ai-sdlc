@@ -58,36 +58,39 @@
                 Weather App
             </h1>
             
-            <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+            <!-- Unit Toggle and Help Button -->
+            <div class="flex items-center justify-center gap-3">
+                <!-- Unit Toggle -->
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
+                
+                <!-- Help Button -->
                 <button 
-                    id="unit-metric" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
+                    id="help-btn" 
+                    class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors min-h-[44px] min-w-[44px]"
+                    title="Help & FAQ"
+                    aria-label="Help & FAQ"
                 >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+                    <span class="text-lg">❓</span>
+                    <span class="hidden sm:inline text-sm font-medium">Help</span>
                 </button>
             </div>
-            
-            <!-- Help Button -->
-            <button 
-                id="help-btn" 
-                class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors min-h-[44px] min-w-[44px]"
-                title="Help & FAQ"
-                aria-label="Help & FAQ"
-            >
-                <span class="text-lg">❓</span>
-                <span class="hidden sm:inline text-sm font-medium">Help</span>
-            </button>
         </header>
         
         <!-- Weather View (existing content) -->
@@ -841,7 +844,7 @@
             elements.weatherView.classList.add('hidden');
             elements.helpView.classList.remove('hidden');
             state.currentView = 'help';
-            window.location.hash = 'help';
+            history.pushState({ view: 'help' }, 'Help & FAQ', '#help');
         }
 
         function showWeatherView() {
