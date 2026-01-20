@@ -794,7 +794,7 @@
             elements.weatherView.classList.remove('hidden');
             state.currentView = 'weather';
             // Clear hash without adding to history
-            history.pushState('', document.title, window.location.pathname + window.location.search);
+            history.pushState(null, '', window.location.pathname + window.location.search);
         }
         
         function handleRouteChange() {
@@ -831,10 +831,12 @@
             // Handle initial route
             handleRouteChange();
 
-            // Focus search input on load if on weather view
-            if (state.currentView === 'weather') {
-                elements.cityInput.focus();
-            }
+            // Focus search input on load if on weather view (after route is handled)
+            setTimeout(() => {
+                if (state.currentView === 'weather') {
+                    elements.cityInput.focus();
+                }
+            }, 0);
         }
 
         // Start the app
