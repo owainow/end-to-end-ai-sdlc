@@ -59,25 +59,41 @@
             </h1>
             
             <!-- Unit Toggle -->
-            <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+            <div class="inline-flex items-center gap-3">
+                <div class="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm" role="group" aria-label="Temperature unit selection">
+                    <button 
+                        id="unit-metric" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="true"
+                    >
+                        °C
+                    </button>
+                    <button 
+                        id="unit-imperial" 
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                        aria-pressed="false"
+                    >
+                        °F
+                    </button>
+                </div>
+                
+                <!-- Help Button -->
                 <button 
-                    id="unit-metric" 
+                    id="help-btn"
                     type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-l-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="true"
+                    class="flex items-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    title="Help & FAQ"
                 >
-                    °C
-                </button>
-                <button 
-                    id="unit-imperial" 
-                    type="button"
-                    class="px-4 py-2 text-sm font-medium rounded-r-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                    aria-pressed="false"
-                >
-                    °F
+                    <span class="text-lg">❓</span>
+                    <span class="hidden sm:inline text-sm font-medium">Help</span>
                 </button>
             </div>
         </header>
+        
+        <!-- Weather View -->
+        <div id="weather-view">
         
         <!-- Search Section -->
         <section class="mb-8" aria-label="City search">
@@ -193,6 +209,54 @@
             
         </main>
         
+        </div>
+        <!-- End Weather View -->
+        
+        <!-- Help View -->
+        <div id="help-view" class="hidden">
+            
+            <!-- Back Navigation -->
+            <button id="back-to-weather-btn" class="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Weather
+            </button>
+            
+            <!-- Quick Tips Section -->
+            <section id="quick-tips" class="mb-10">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">💡 Quick Tips</h2>
+                
+                <!-- Tips Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Tip 1: Search Any City -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <i class="wi wi-day-cloudy text-blue-500 text-5xl mb-3 block" aria-hidden="true"></i>
+                        <h3 class="font-semibold text-gray-800 text-lg mb-2">Search Any City</h3>
+                        <p class="text-sm text-gray-600">Enter a city name to get current weather</p>
+                    </div>
+                    
+                    <!-- Tip 2: Toggle Units -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <i class="wi wi-thermometer text-red-400 text-5xl mb-3 block" aria-hidden="true"></i>
+                        <h3 class="font-semibold text-gray-800 text-lg mb-2">Toggle Units</h3>
+                        <p class="text-sm text-gray-600">Switch between °C and °F anytime</p>
+                    </div>
+                    
+                    <!-- Tip 3: Be Specific -->
+                    <div class="bg-blue-50 rounded-xl p-6 text-center">
+                        <i class="wi wi-stars text-yellow-500 text-5xl mb-3 block" aria-hidden="true"></i>
+                        <h3 class="font-semibold text-gray-800 text-lg mb-2">Be Specific</h3>
+                        <p class="text-sm text-gray-600">Add country for better accuracy</p>
+                    </div>
+                    
+                </div>
+            </section>
+            
+        </div>
+        <!-- End Help View -->
+        
         <!-- Footer -->
         <footer class="mt-12 text-center text-sm text-gray-400">
             <p>Powered by OpenWeatherMap</p>
@@ -297,7 +361,15 @@
             humidity: document.getElementById('humidity'),
             windSpeed: document.getElementById('wind-speed'),
             description: document.getElementById('description'),
-            weatherIcon: document.getElementById('weather-icon')
+            weatherIcon: document.getElementById('weather-icon'),
+            
+            // Views
+            weatherView: document.getElementById('weather-view'),
+            helpView: document.getElementById('help-view'),
+            
+            // Help navigation
+            helpBtn: document.getElementById('help-btn'),
+            backToWeatherBtn: document.getElementById('back-to-weather-btn')
         };
 
         // ============================================
@@ -427,6 +499,20 @@
             hideAllContent();
             hideLoading();
             elements.weatherCard.classList.remove('hidden');
+        }
+        
+        // ============================================
+        // View Navigation Functions
+        // ============================================
+        
+        function showHelpView() {
+            elements.weatherView.classList.add('hidden');
+            elements.helpView.classList.remove('hidden');
+        }
+        
+        function showWeatherView() {
+            elements.helpView.classList.add('hidden');
+            elements.weatherView.classList.remove('hidden');
         }
 
         // ============================================
@@ -615,6 +701,10 @@
 
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
+            
+            // Help view navigation
+            elements.helpBtn.addEventListener('click', showHelpView);
+            elements.backToWeatherBtn.addEventListener('click', showWeatherView);
 
             // Focus search input on load
             elements.cityInput.focus();
