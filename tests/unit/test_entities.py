@@ -59,12 +59,16 @@ class TestWeatherRequest:
 
     def test_empty_city_raises_error(self) -> None:
         """Test that empty city raises ValueError."""
-        with pytest.raises(ValueError, match="City name cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Either city name or coordinates must be provided"
+        ):
             WeatherRequest(city="")
 
     def test_whitespace_city_raises_error(self) -> None:
         """Test that whitespace-only city raises ValueError."""
-        with pytest.raises(ValueError, match="City name cannot be empty"):
+        with pytest.raises(
+            ValueError, match="Either city name or coordinates must be provided"
+        ):
             WeatherRequest(city="   ")
 
     def test_long_city_raises_error(self) -> None:
@@ -82,6 +86,41 @@ class TestWeatherRequest:
         assert request1.cache_key == request2.cache_key
         # Different units = different key
         assert request1.cache_key != request3.cache_key
+
+    def test_request_with_coordinates(self) -> None:
+        """Test creating a request with coordinates."""
+        coords = Coordinates(latitude=51.5074, longitude=-0.1278)
+        request = WeatherRequest(coordinates=coords, units=UnitSystem.METRIC)
+        assert request.coordinates == coords
+        assert request.units == UnitSystem.METRIC
+
+    def test_empty_city_and_no_coordinates_raises_error(self) -> None:
+        """Test that request without city or coordinates raises ValueError."""
+        with pytest.raises(
+            ValueError, match="Either city name or coordinates must be provided"
+        ):
+            WeatherRequest(city="", coordinates=None)
+
+    def test_cache_key_with_coordinates(self) -> None:
+        """Test cache key generation for coordinate-based requests."""
+        coords1 = Coordinates(latitude=51.5074, longitude=-0.1278)
+        coords2 = Coordinates(latitude=51.507401, longitude=-0.127801)
+        request1 = WeatherRequest(coordinates=coords1, units=UnitSystem.METRIC)
+        request2 = WeatherRequest(coordinates=coords2, units=UnitSystem.METRIC)
+
+        # Coordinates rounded to 2 decimal places should match
+        assert request1.cache_key == request2.cache_key
+        assert "coords:51.51,-0.13" in request1.cache_key
+
+    def test_coordinates_preferred_over_city(self) -> None:
+        """Test that coordinates can be provided with or without city."""
+        coords = Coordinates(latitude=51.5074, longitude=-0.1278)
+        request = WeatherRequest(
+            city="London", coordinates=coords, units=UnitSystem.METRIC
+        )
+        assert request.coordinates == coords
+        # Cache key should use coordinates
+        assert "coords:" in request.cache_key
 
 
 class TestWeatherData:

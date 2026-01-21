@@ -49,11 +49,20 @@ class OpenWeatherMapClient(WeatherProviderPort):
             WeatherProviderError: If the API request fails.
             RateLimitExceededError: If rate limit is exceeded.
         """
-        params = {
-            "q": request.city,
-            "units": request.units.value,
-            "appid": self._api_key,
-        }
+        # Build params based on whether we have coordinates or city
+        if request.coordinates:
+            params = {
+                "lat": request.coordinates.latitude,
+                "lon": request.coordinates.longitude,
+                "units": request.units.value,
+                "appid": self._api_key,
+            }
+        else:
+            params = {
+                "q": request.city,
+                "units": request.units.value,
+                "appid": self._api_key,
+            }
 
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -63,7 +72,12 @@ class OpenWeatherMapClient(WeatherProviderPort):
                 )
 
                 if response.status_code == 404:
-                    raise CityNotFoundError(request.city)
+                    location = (
+                        f"{request.coordinates}"
+                        if request.coordinates
+                        else request.city
+                    )
+                    raise CityNotFoundError(location)
 
                 if response.status_code == 429:
                     retry_after = int(response.headers.get("Retry-After", "60"))
