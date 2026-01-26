@@ -54,9 +54,12 @@ jobs:
             az acr create \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --name ${{ env.ACR_NAME }} \
-              --sku Basic
+              --sku Basic \
+              --admin-enabled true
           else
             echo "Container Registry already exists"
+            # Ensure admin is enabled for simpler auth
+            az acr update --name ${{ env.ACR_NAME }} --admin-enabled true
           fi
 
       - name: Create Container Apps Environment if not exists
@@ -92,6 +95,14 @@ jobs:
       # ============================================
       # DEPLOY
       # ============================================
+
+      - name: Get ACR credentials
+        run: |
+          ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query "passwords[0].value" -o tsv)
+          echo "::add-mask::$ACR_PASSWORD"
+          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
       
       - name: Deploy to Container Apps
         run: |
@@ -110,7 +121,8 @@ jobs:
               --environment ${{ env.CONTAINER_APP_ENV }} \
               --image ${{ env.IMAGE_TAG }} \
               --registry-server ${{ env.ACR_NAME }}.azurecr.io \
-              --registry-identity system \
+              --registry-username ${{ env.ACR_USERNAME }} \
+              --registry-password ${{ env.ACR_PASSWORD }} \
               --target-port 8000 \
               --ingress external \
               --env-vars OPENWEATHERMAP_API_KEY=secretref:openweathermap-api-key \
