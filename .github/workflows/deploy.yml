@@ -2,10 +2,8 @@ name: Build and Deploy to Azure Container Apps
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches: [main]  # Triggers when PR is merged to main
+  workflow_dispatch:   # Manual trigger
 
 env:
   RESOURCE_GROUP: weatherapp-rg
