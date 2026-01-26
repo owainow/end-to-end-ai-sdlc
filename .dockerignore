@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov/
+tests/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Specs and docs (not needed in container)
+specs/
+docs/
+*.md
+!README.md
+
+# Environment files (secrets handled separately)
+.env
+.env.*
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

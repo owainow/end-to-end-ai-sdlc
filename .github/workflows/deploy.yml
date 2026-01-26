@@ -1,0 +1,130 @@
+name: Build and Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP: weatherapp-rg
+  LOCATION: uksouth
+  ACR_NAME: weatherappacr2026
+  CONTAINER_APP_ENV: weatherapp-env
+  CONTAINER_APP_NAME: weatherapp
+  IMAGE_NAME: weatherapp
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # ============================================
+      # INFRASTRUCTURE SETUP (Idempotent)
+      # ============================================
+      
+      - name: Create Resource Group if not exists
+        run: |
+          if ! az group show --name ${{ env.RESOURCE_GROUP }} &>/dev/null; then
+            echo "Creating resource group..."
+            az group create --name ${{ env.RESOURCE_GROUP }} --location ${{ env.LOCATION }}
+          else
+            echo "Resource group already exists"
+          fi
+
+      - name: Create Container Registry if not exists
+        run: |
+          if ! az acr show --name ${{ env.ACR_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} &>/dev/null; then
+            echo "Creating Azure Container Registry..."
+            az acr create \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --name ${{ env.ACR_NAME }} \
+              --sku Basic
+          else
+            echo "Container Registry already exists"
+          fi
+
+      - name: Create Container Apps Environment if not exists
+        run: |
+          if ! az containerapp env show --name ${{ env.CONTAINER_APP_ENV }} --resource-group ${{ env.RESOURCE_GROUP }} &>/dev/null; then
+            echo "Creating Container Apps environment..."
+            az containerapp env create \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --name ${{ env.CONTAINER_APP_ENV }} \
+              --location ${{ env.LOCATION }}
+          else
+            echo "Container Apps environment already exists"
+          fi
+
+      # ============================================
+      # BUILD AND PUSH
+      # ============================================
+      
+      - name: Login to ACR
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build and push Docker image
+        working-directory: ./weatherapp
+        run: |
+          IMAGE_TAG=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          IMAGE_LATEST=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          
+          docker build -t $IMAGE_TAG -t $IMAGE_LATEST .
+          docker push $IMAGE_TAG
+          docker push $IMAGE_LATEST
+          
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      # ============================================
+      # DEPLOY
+      # ============================================
+      
+      - name: Deploy to Container Apps
+        run: |
+          # Check if app exists
+          if az containerapp show --name ${{ env.CONTAINER_APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} &>/dev/null; then
+            echo "Updating existing Container App..."
+            az containerapp update \
+              --name ${{ env.CONTAINER_APP_NAME }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --image ${{ env.IMAGE_TAG }}
+          else
+            echo "Creating new Container App..."
+            az containerapp create \
+              --name ${{ env.CONTAINER_APP_NAME }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --environment ${{ env.CONTAINER_APP_ENV }} \
+              --image ${{ env.IMAGE_TAG }} \
+              --registry-server ${{ env.ACR_NAME }}.azurecr.io \
+              --registry-identity system \
+              --target-port 8000 \
+              --ingress external \
+              --env-vars OPENWEATHERMAP_API_KEY=secretref:openweathermap-api-key \
+              --secrets openweathermap-api-key=${{ secrets.OPENWEATHERMAP_API_KEY }} \
+              --min-replicas 0 \
+              --max-replicas 3
+          fi
+
+      - name: Get App URL
+        run: |
+          APP_URL=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "🚀 App deployed to: https://$APP_URL"
+          echo "APP_URL=https://$APP_URL" >> $GITHUB_STEP_SUMMARY
