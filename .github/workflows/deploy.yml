@@ -79,7 +79,6 @@ jobs:
         run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Build and push Docker image
-        working-directory: ./weatherapp
         run: |
           IMAGE_TAG=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
           IMAGE_LATEST=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
