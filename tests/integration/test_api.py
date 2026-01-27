@@ -24,6 +24,7 @@ def sample_weather_data() -> WeatherData:
         pressure=1013,
         visibility=10000,
         description="scattered clouds",
+        icon_code="03d",
         units=UnitSystem.METRIC,
         timestamp=datetime.now(UTC),
     )
@@ -104,6 +105,7 @@ class TestWeatherEndpoint:
             pressure=1013,
             visibility=10000,
             description="scattered clouds",
+            icon_code="03d",
             units=UnitSystem.IMPERIAL,
             timestamp=datetime.now(UTC),
         )

@@ -31,6 +31,7 @@ class TestInMemoryCache:
             pressure=1013,
             visibility=10000,
             description="scattered clouds",
+            icon_code="03d",
             units=UnitSystem.METRIC,
             timestamp=datetime.now(UTC),
         )
@@ -99,6 +100,7 @@ class TestInMemoryCache:
             pressure=1010,
             visibility=10000,
             description="cloudy",
+            icon_code="03d",
             units=UnitSystem.METRIC,
             timestamp=datetime.now(UTC),
         )
@@ -113,6 +115,7 @@ class TestInMemoryCache:
             pressure=1020,
             visibility=10000,
             description="sunny",
+            icon_code="01d",
             units=UnitSystem.METRIC,
             timestamp=datetime.now(UTC),
         )

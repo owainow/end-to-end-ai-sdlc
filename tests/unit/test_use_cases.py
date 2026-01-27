@@ -48,6 +48,7 @@ class TestGetWeatherUseCase:
             pressure=1013,
             visibility=10000,
             description="scattered clouds",
+            icon_code="03d",
             units=UnitSystem.METRIC,
             timestamp=datetime.now(UTC),
         )
