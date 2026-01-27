@@ -227,32 +227,12 @@
         
         .cloud {
             position: absolute;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 100px;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMjAwIDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzPgogICAgPGZpbHRlciBpZD0iYmx1ciI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBpbj0iU291cmNlR3JhcGhpYyIgc3RkRGV2aWF0aW9uPSIyIiAvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxnIGZpbHRlcj0idXJsKCNibHVyKSI+CiAgICA8ZWxsaXBzZSBjeD0iNjAiIGN5PSI1MCIgcng9IjM1IiByeT0iMjUiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjkiLz4KICAgIDxlbGxpcHNlIGN4PSI5MCIgY3k9IjQwIiByeD0iNDUiIHJ5PSIzMCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPgogICAgPGVsbGlwc2UgY3g9IjEyNSIgY3k9IjQ1IiByeD0iNDAiIHJ5PSIyOCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPgogICAgPGVsbGlwc2UgY3g9IjE1NSIgY3k9IjU1IiByeD0iMzAiIHJ5PSIyMCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPgogIDwvZz4KPC9zdmc+');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
             animation: cloudDrift linear infinite;
             will-change: transform;
-        }
-        
-        .cloud::before,
-        .cloud::after {
-            content: '';
-            position: absolute;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 100px;
-        }
-        
-        .cloud::before {
-            width: 50px;
-            height: 50px;
-            top: -25px;
-            left: 10px;
-        }
-        
-        .cloud::after {
-            width: 60px;
-            height: 40px;
-            top: -15px;
-            right: 10px;
         }
         
         @keyframes cloudDrift {
