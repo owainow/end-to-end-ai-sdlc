@@ -20,6 +20,7 @@ class WeatherData:
     pressure: int
     visibility: int
     description: str
+    icon_code: str
     units: UnitSystem
     timestamp: datetime
 

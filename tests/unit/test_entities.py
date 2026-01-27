@@ -140,6 +140,7 @@ class TestWeatherData:
             pressure=1013,
             visibility=10000,
             description="scattered clouds",
+            icon_code="03d",
             units=UnitSystem.METRIC,
             timestamp=datetime.now(UTC),
         )
@@ -161,6 +162,7 @@ class TestWeatherData:
             pressure=1015,
             visibility=10000,
             description="clear sky",
+            icon_code="01d",
             units=UnitSystem.IMPERIAL,
             timestamp=datetime.now(UTC),
         )
