@@ -440,6 +440,14 @@
             UNITS: 'weatherUnits'
         };
         
+        // Rain animation constants
+        const RAIN_CONFIG = {
+            DROP_COUNT: 75,
+            MIN_DURATION: 0.5,  // seconds
+            MAX_DURATION: 1.5,  // seconds
+            MAX_DELAY: 2        // seconds
+        };
+        
         // Quick Tips Data (T015)
         const QUICK_TIPS = [
             {
@@ -735,12 +743,13 @@
                 // Random horizontal position
                 drop.style.left = Math.random() * 100 + '%';
                 
-                // Random animation duration (0.5s to 1.5s)
-                const duration = 0.5 + Math.random() * 1;
+                // Random animation duration
+                const durationRange = RAIN_CONFIG.MAX_DURATION - RAIN_CONFIG.MIN_DURATION;
+                const duration = RAIN_CONFIG.MIN_DURATION + Math.random() * durationRange;
                 drop.style.animationDuration = duration + 's';
                 
                 // Random animation delay for staggered effect
-                drop.style.animationDelay = Math.random() * 2 + 's';
+                drop.style.animationDelay = Math.random() * RAIN_CONFIG.MAX_DELAY + 's';
                 
                 fragment.appendChild(drop);
             }
@@ -788,7 +797,7 @@
             if (effect === 'rain') {
                 // Show background and create rain
                 elements.weatherBackground.classList.remove('hidden');
-                createRainDrops(75); // Create 75 rain drops
+                createRainDrops(RAIN_CONFIG.DROP_COUNT);
             } else {
                 // Hide background
                 elements.weatherBackground.classList.add('hidden');
