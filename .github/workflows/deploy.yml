@@ -132,11 +132,35 @@ jobs:
               --max-replicas 3
           fi
 
-      - name: Get App URL
+      - name: Get App URL and Revision URL
         run: |
+          # Get the live app URL
           APP_URL=$(az containerapp show \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --query "properties.configuration.ingress.fqdn" -o tsv)
-          echo "🚀 App deployed to: https://$APP_URL"
-          echo "APP_URL=https://$APP_URL" >> $GITHUB_STEP_SUMMARY
+          
+          # Get the latest revision name
+          REVISION_NAME=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.latestRevisionName" -o tsv)
+          
+          # Get the revision-specific URL
+          REVISION_FQDN=$(az containerapp revision show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --revision $REVISION_NAME \
+            --query "properties.fqdn" -o tsv)
+          
+          echo "🚀 **Deployment Complete**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| URL Type | Link |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌐 Live URL | https://$APP_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📌 Revision URL | https://$REVISION_FQDN |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏷️ Revision Name | \`$REVISION_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo ""
+          echo "🚀 Live URL: https://$APP_URL"
+          echo "📌 Revision URL: https://$REVISION_FQDN"
+          echo "🏷️ Revision: $REVISION_NAME"
