@@ -3,6 +3,9 @@ name: Build and Deploy to Azure Container Apps
 on:
   push:
     branches: [main]  # Triggers when PR is merged to main
+  pull_request:
+    types: [review_requested]
+    branches: [main]  # Triggers when a review is requested on a PR targeting main
   workflow_dispatch:   # Manual trigger
 
 env:
