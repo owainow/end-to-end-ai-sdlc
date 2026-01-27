@@ -1080,7 +1080,7 @@
                 const widthRange = CLOUD_CONFIG.MAX_WIDTH - CLOUD_CONFIG.MIN_WIDTH;
                 const width = CLOUD_CONFIG.MIN_WIDTH + Math.random() * widthRange;
                 cloud.style.width = width + 'px';
-                cloud.style.height = (width * 0.6) + 'px'; // Height proportional to width
+                cloud.style.height = (width * 0.4) + 'px'; // Height proportional to width (matches SVG 2.5:1 aspect ratio)
                 
                 // Random animation duration (very slow drift)
                 const durationRange = CLOUD_CONFIG.MAX_DURATION - CLOUD_CONFIG.MIN_DURATION;
