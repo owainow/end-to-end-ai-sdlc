@@ -109,6 +109,7 @@ async def get_weather(
         visibility=weather_data.visibility,
         description=weather_data.description,
         icon_code=weather_data.icon_code,
+        weather_main=weather_data.weather_main,
         units=weather_data.units,
         timestamp=weather_data.timestamp,
     )

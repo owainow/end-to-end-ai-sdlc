@@ -765,17 +765,17 @@
         }
         
         /**
-         * Get background effect based on weather description
+         * Get background effect based on weather main category
          */
-        function getBackgroundEffect(description) {
-            if (!description) return null;
+        function getBackgroundEffect(weatherMain) {
+            if (!weatherMain) return null;
             
-            const lowerDesc = description.toLowerCase();
-            // Check for rain-related keywords in description
-            const rainyKeywords = ['rain', 'drizzle', 'shower'];
-            const hasRain = rainyKeywords.some(keyword => lowerDesc.includes(keyword));
+            // Check for rain-related weather main categories (exact match)
+            if (weatherMain === 'Rain' || weatherMain === 'Drizzle') {
+                return 'rain';
+            }
             
-            return hasRain ? 'rain' : null;
+            return null;
         }
         
         /**
@@ -1037,8 +1037,8 @@
             elements.weatherIcon.className = `wi ${iconClass} ${colorClass} weather-icon-large`;
             elements.weatherIcon.setAttribute('aria-label', weather.description);
             
-            // Set background effect based on weather description
-            const effect = getBackgroundEffect(weather.description);
+            // Set background effect based on weather main category
+            const effect = getBackgroundEffect(weather.weather_main);
             setBackgroundEffect(effect);
 
             showWeatherCard();

@@ -25,6 +25,7 @@ def sample_weather_data() -> WeatherData:
         visibility=10000,
         description="scattered clouds",
         icon_code="03d",
+        weather_main="Clouds",
         units=UnitSystem.METRIC,
         timestamp=datetime.now(UTC),
     )
@@ -106,6 +107,7 @@ class TestWeatherEndpoint:
             visibility=10000,
             description="scattered clouds",
             icon_code="03d",
+            weather_main="Clouds",
             units=UnitSystem.IMPERIAL,
             timestamp=datetime.now(UTC),
         )

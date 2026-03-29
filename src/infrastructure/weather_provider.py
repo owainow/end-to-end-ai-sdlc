@@ -126,6 +126,7 @@ class OpenWeatherMapClient(WeatherProviderPort):
             visibility=data.get("visibility", 0),
             description=weather.get("description", ""),
             icon_code=weather.get("icon", ""),
+            weather_main=weather.get("main", ""),
             units=units,
             timestamp=datetime.now(UTC),
         )

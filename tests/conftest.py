@@ -30,6 +30,8 @@ def sample_weather_data(sample_coordinates: Coordinates) -> WeatherData:
         pressure=1013,
         visibility=10000,
         description="scattered clouds",
+        icon_code="03d",
+        weather_main="Clouds",
         units=UnitSystem.METRIC,
         timestamp=datetime.now(UTC),
     )

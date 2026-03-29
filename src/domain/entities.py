@@ -21,6 +21,7 @@ class WeatherData:
     visibility: int
     description: str
     icon_code: str
+    weather_main: str
     units: UnitSystem
     timestamp: datetime
 

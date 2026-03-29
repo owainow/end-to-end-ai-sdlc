@@ -24,6 +24,7 @@ class WeatherResponse(BaseModel):
                 "visibility": 10000,
                 "description": "scattered clouds",
                 "icon_code": "03d",
+                "weather_main": "Clouds",
                 "units": "metric",
                 "timestamp": "2024-01-19T15:30:00Z",
             }
@@ -43,6 +44,7 @@ class WeatherResponse(BaseModel):
     visibility: int = Field(..., ge=0, description="Visibility in meters")
     description: str = Field(..., description="Weather condition description")
     icon_code: str = Field(..., description="Weather icon code")
+    weather_main: str = Field(..., description="Main weather condition (Rain, Clear, Clouds, etc.)")
     units: UnitSystem = Field(..., description="Temperature units (metric/imperial)")
     timestamp: datetime = Field(..., description="Data timestamp (UTC)")
 
