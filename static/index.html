@@ -134,6 +134,116 @@
             }
         }
         
+        /* Snow Animation Styles */
+        #snow-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .snowflake {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: snowFall linear infinite;
+            will-change: transform;
+        }
+        
+        @keyframes snowFall {
+            0% {
+                transform: translateY(-100px) translateX(0);
+            }
+            100% {
+                transform: translateY(100vh) translateX(50px);
+            }
+        }
+        
+        /* Thunderstorm Animation Styles */
+        #thunder-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0);
+            pointer-events: none;
+        }
+        
+        .lightning-flash {
+            animation: lightningFlash 0.2s ease-in-out;
+        }
+        
+        @keyframes lightningFlash {
+            0%, 100% {
+                background-color: rgba(255, 255, 255, 0);
+            }
+            10%, 30%, 50% {
+                background-color: rgba(255, 255, 255, 0.8);
+            }
+            20%, 40% {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+        }
+        
+        /* Wind Animation Styles */
+        #wind-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .wind-streak {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(to right, rgba(200, 200, 200, 0), rgba(200, 200, 200, 0.6), rgba(200, 200, 200, 0));
+            animation: windBlow linear infinite;
+            will-change: transform;
+            transform: rotate(-5deg);
+        }
+        
+        @keyframes windBlow {
+            from {
+                transform: translateX(-150px) rotate(-5deg);
+            }
+            to {
+                transform: translateX(100vw) rotate(-5deg);
+            }
+        }
+        
+        /* Cloud Animation Styles */
+        #clouds-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .cloud {
+            position: absolute;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjgwIiB2aWV3Qm94PSIwIDAgMjAwIDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzPgogICAgPGZpbHRlciBpZD0iYmx1ciI+CiAgICAgIDxmZUdhdXNzaWFuQmx1ciBpbj0iU291cmNlR3JhcGhpYyIgc3RkRGV2aWF0aW9uPSIyIiAvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxnIGZpbHRlcj0idXJsKCNibHVyKSI+CiAgICA8ZWxsaXBzZSBjeD0iNjAiIGN5PSI1MCIgcng9IjM1IiByeT0iMjUiIGZpbGw9IndoaXRlIiBvcGFjaXR5PSIwLjkiLz4KICAgIDxlbGxpcHNlIGN4PSI5MCIgY3k9IjQwIiByeD0iNDUiIHJ5PSIzMCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPgogICAgPGVsbGlwc2UgY3g9IjEyNSIgY3k9IjQ1IiByeD0iNDAiIHJ5PSIyOCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPgogICAgPGVsbGlwc2UgY3g9IjE1NSIgY3k9IjU1IiByeD0iMzAiIHJ5PSIyMCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPgogIDwvZz4KPC9zdmc+');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: cloudDrift linear infinite;
+            will-change: transform;
+        }
+        
+        @keyframes cloudDrift {
+            from {
+                transform: translateX(-200px);
+            }
+            to {
+                transform: translateX(100vw);
+            }
+        }
+        
         /* Fade transitions for background */
         .background-fade-in {
             animation: backgroundFadeIn 0.5s ease-in-out forwards;
@@ -163,7 +273,10 @@
         
         /* Respect prefers-reduced-motion */
         @media (prefers-reduced-motion: reduce) {
-            .rain-drop {
+            .rain-drop,
+            .snowflake,
+            .wind-streak,
+            .cloud {
                 animation: none;
             }
             
@@ -183,6 +296,10 @@
     <!-- Weather Background Container -->
     <div id="weather-background" class="hidden">
         <div id="rain-container"></div>
+        <div id="snow-container"></div>
+        <div id="thunder-container"></div>
+        <div id="wind-container"></div>
+        <div id="clouds-container"></div>
     </div>
     
     <div class="container mx-auto px-4 py-8 max-w-lg">
@@ -430,7 +547,8 @@
             error: null,
             currentView: 'weather', // T010: track current view
             geolocating: false, // T006: track geolocation state
-            backgroundEffect: null // T005: track current background effect
+            backgroundEffect: null, // T005: track current background effect
+            thunderInterval: null // Track thunder interval for cleanup
         };
 
         // ============================================
@@ -446,6 +564,39 @@
             MIN_DURATION: 0.5,  // seconds
             MAX_DURATION: 1.5,  // seconds
             MAX_DELAY: 2        // seconds
+        };
+        
+        // Snow animation constants
+        const SNOW_CONFIG = {
+            FLAKE_COUNT: 60,
+            MIN_DURATION: 3,    // seconds
+            MAX_DURATION: 8,    // seconds
+            MIN_SIZE: 3,        // pixels
+            MAX_SIZE: 8,        // pixels
+            MAX_DELAY: 5        // seconds
+        };
+        
+        // Thunderstorm animation constants
+        const THUNDER_CONFIG = {
+            MIN_FLASH_INTERVAL: 3000,  // milliseconds
+            MAX_FLASH_INTERVAL: 10000  // milliseconds
+        };
+        
+        // Wind animation constants
+        const WIND_CONFIG = {
+            STREAK_COUNT: 25,
+            MIN_DURATION: 1,    // seconds
+            MAX_DURATION: 3,    // seconds
+            SPEED_THRESHOLD: 10 // m/s
+        };
+        
+        // Cloud animation constants
+        const CLOUD_CONFIG = {
+            CLOUD_COUNT: 6,
+            MIN_WIDTH: 100,     // pixels
+            MAX_WIDTH: 200,     // pixels
+            MIN_DURATION: 30,   // seconds
+            MAX_DURATION: 60    // seconds
         };
         
         // Quick Tips Data (T015)
@@ -670,7 +821,11 @@
             
             // Weather background elements
             weatherBackground: document.getElementById('weather-background'),
-            rainContainer: document.getElementById('rain-container')
+            rainContainer: document.getElementById('rain-container'),
+            snowContainer: document.getElementById('snow-container'),
+            thunderContainer: document.getElementById('thunder-container'),
+            windContainer: document.getElementById('wind-container'),
+            cloudsContainer: document.getElementById('clouds-container')
         };
 
         // ============================================
@@ -765,17 +920,227 @@
         }
         
         /**
-         * Get background effect based on weather description
+         * Create snowflakes for snow animation
          */
-        function getBackgroundEffect(description) {
-            if (!description) return null;
+        function createSnowflakes(count) {
+            // Don't create animation if user prefers reduced motion
+            if (prefersReducedMotion()) {
+                return;
+            }
             
-            const lowerDesc = description.toLowerCase();
-            // Check for rain-related keywords in description
-            const rainyKeywords = ['rain', 'drizzle', 'shower'];
-            const hasRain = rainyKeywords.some(keyword => lowerDesc.includes(keyword));
+            const fragment = document.createDocumentFragment();
             
-            return hasRain ? 'rain' : null;
+            for (let i = 0; i < count; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                
+                // Random horizontal position
+                flake.style.left = Math.random() * 100 + '%';
+                
+                // Random size for depth effect
+                const sizeRange = SNOW_CONFIG.MAX_SIZE - SNOW_CONFIG.MIN_SIZE;
+                const size = SNOW_CONFIG.MIN_SIZE + Math.random() * sizeRange;
+                flake.style.width = size + 'px';
+                flake.style.height = size + 'px';
+                
+                // Random animation duration (slower than rain)
+                const durationRange = SNOW_CONFIG.MAX_DURATION - SNOW_CONFIG.MIN_DURATION;
+                const duration = SNOW_CONFIG.MIN_DURATION + Math.random() * durationRange;
+                flake.style.animationDuration = duration + 's';
+                
+                // Random animation delay for staggered effect
+                flake.style.animationDelay = Math.random() * SNOW_CONFIG.MAX_DELAY + 's';
+                
+                // Subtle opacity variation
+                flake.style.opacity = 0.6 + Math.random() * 0.4;
+                
+                fragment.appendChild(flake);
+            }
+            
+            elements.snowContainer.appendChild(fragment);
+        }
+        
+        /**
+         * Clear all snowflakes
+         */
+        function clearSnow() {
+            elements.snowContainer.innerHTML = '';
+        }
+        
+        /**
+         * Start thunderstorm animation
+         */
+        function startThunderstorm() {
+            // Don't create animation if user prefers reduced motion
+            if (prefersReducedMotion()) {
+                return;
+            }
+            
+            // First, add rain
+            createRainDrops(RAIN_CONFIG.DROP_COUNT);
+            
+            // Function to trigger a lightning flash
+            function triggerLightning() {
+                elements.thunderContainer.classList.add('lightning-flash');
+                
+                // Remove the class after animation completes
+                setTimeout(() => {
+                    elements.thunderContainer.classList.remove('lightning-flash');
+                }, 200);
+            }
+            
+            // Schedule random lightning flashes
+            function scheduleNextFlash() {
+                const delay = THUNDER_CONFIG.MIN_FLASH_INTERVAL + 
+                             Math.random() * (THUNDER_CONFIG.MAX_FLASH_INTERVAL - THUNDER_CONFIG.MIN_FLASH_INTERVAL);
+                
+                state.thunderInterval = setTimeout(() => {
+                    triggerLightning();
+                    scheduleNextFlash();
+                }, delay);
+            }
+            
+            // Start the lightning cycle
+            scheduleNextFlash();
+        }
+        
+        /**
+         * Stop thunderstorm animation
+         */
+        function stopThunderstorm() {
+            if (state.thunderInterval) {
+                clearTimeout(state.thunderInterval);
+                state.thunderInterval = null;
+            }
+            clearRain();
+            elements.thunderContainer.classList.remove('lightning-flash');
+        }
+        
+        /**
+         * Create wind streaks for wind animation
+         */
+        function createWindStreaks(count) {
+            // Don't create animation if user prefers reduced motion
+            if (prefersReducedMotion()) {
+                return;
+            }
+            
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = 0; i < count; i++) {
+                const streak = document.createElement('div');
+                streak.className = 'wind-streak';
+                
+                // Random vertical position
+                streak.style.top = Math.random() * 100 + '%';
+                
+                // Random animation duration
+                const durationRange = WIND_CONFIG.MAX_DURATION - WIND_CONFIG.MIN_DURATION;
+                const duration = WIND_CONFIG.MIN_DURATION + Math.random() * durationRange;
+                streak.style.animationDuration = duration + 's';
+                
+                // Random animation delay for staggered effect
+                streak.style.animationDelay = Math.random() * 2 + 's';
+                
+                // Varied opacity for depth
+                streak.style.opacity = 0.3 + Math.random() * 0.4;
+                
+                fragment.appendChild(streak);
+            }
+            
+            elements.windContainer.appendChild(fragment);
+        }
+        
+        /**
+         * Clear all wind streaks
+         */
+        function clearWind() {
+            elements.windContainer.innerHTML = '';
+        }
+        
+        /**
+         * Create clouds for cloud animation
+         */
+        function createClouds(count) {
+            // Don't create animation if user prefers reduced motion
+            if (prefersReducedMotion()) {
+                return;
+            }
+            
+            const fragment = document.createDocumentFragment();
+            
+            for (let i = 0; i < count; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                
+                // Random vertical position (upper half of screen)
+                cloud.style.top = Math.random() * 50 + '%';
+                
+                // Random cloud width
+                const widthRange = CLOUD_CONFIG.MAX_WIDTH - CLOUD_CONFIG.MIN_WIDTH;
+                const width = CLOUD_CONFIG.MIN_WIDTH + Math.random() * widthRange;
+                cloud.style.width = width + 'px';
+                cloud.style.height = (width * 0.4) + 'px'; // Height proportional to width (matches SVG 2.5:1 aspect ratio)
+                
+                // Random animation duration (very slow drift)
+                const durationRange = CLOUD_CONFIG.MAX_DURATION - CLOUD_CONFIG.MIN_DURATION;
+                const duration = CLOUD_CONFIG.MIN_DURATION + Math.random() * durationRange;
+                cloud.style.animationDuration = duration + 's';
+                
+                // Random animation delay
+                cloud.style.animationDelay = Math.random() * 10 + 's';
+                
+                fragment.appendChild(cloud);
+            }
+            
+            elements.cloudsContainer.appendChild(fragment);
+        }
+        
+        /**
+         * Clear all clouds
+         */
+        function clearClouds() {
+            elements.cloudsContainer.innerHTML = '';
+        }
+        
+        /**
+         * Get background effect based on weather data
+         */
+        function getBackgroundEffect(weatherData) {
+            if (!weatherData) return null;
+            
+            const description = weatherData.description.toLowerCase();
+            const windSpeed = weatherData.wind_speed;
+            
+            // Priority order: thunder > rain/snow > wind > clouds > null
+            
+            // Check for thunderstorm
+            if (description.includes('thunder') || description.includes('storm')) {
+                return 'thunder';
+            }
+            
+            // Check for snow
+            if (description.includes('snow')) {
+                return 'snow';
+            }
+            
+            // Check for rain/drizzle
+            if (description.includes('rain') || description.includes('drizzle') || description.includes('shower')) {
+                return 'rain';
+            }
+            
+            // Check for high wind (>10 m/s)
+            if (windSpeed > WIND_CONFIG.SPEED_THRESHOLD) {
+                return 'wind';
+            }
+            
+            // Check for clouds (but not clear)
+            if (description.includes('cloud') && !description.includes('clear')) {
+                return 'clouds';
+            }
+            
+            // Clear or unknown conditions - no effect
+            return null;
         }
         
         /**
@@ -790,16 +1155,36 @@
             // Clear any existing effect
             if (state.backgroundEffect === 'rain') {
                 clearRain();
+            } else if (state.backgroundEffect === 'snow') {
+                clearSnow();
+            } else if (state.backgroundEffect === 'thunder') {
+                stopThunderstorm();
+            } else if (state.backgroundEffect === 'wind') {
+                clearWind();
+            } else if (state.backgroundEffect === 'clouds') {
+                clearClouds();
             }
             
             state.backgroundEffect = effect;
             
+            // Show background and create effect
             if (effect === 'rain') {
-                // Show background and create rain
                 elements.weatherBackground.classList.remove('hidden');
                 createRainDrops(RAIN_CONFIG.DROP_COUNT);
+            } else if (effect === 'snow') {
+                elements.weatherBackground.classList.remove('hidden');
+                createSnowflakes(SNOW_CONFIG.FLAKE_COUNT);
+            } else if (effect === 'thunder') {
+                elements.weatherBackground.classList.remove('hidden');
+                startThunderstorm();
+            } else if (effect === 'wind') {
+                elements.weatherBackground.classList.remove('hidden');
+                createWindStreaks(WIND_CONFIG.STREAK_COUNT);
+            } else if (effect === 'clouds') {
+                elements.weatherBackground.classList.remove('hidden');
+                createClouds(CLOUD_CONFIG.CLOUD_COUNT);
             } else {
-                // Hide background
+                // Hide background for null or unknown effect
                 elements.weatherBackground.classList.add('hidden');
             }
         }
@@ -1038,7 +1423,7 @@
             elements.weatherIcon.setAttribute('aria-label', weather.description);
             
             // Set background effect based on weather description
-            const effect = getBackgroundEffect(weather.description);
+            const effect = getBackgroundEffect(weather);
             setBackgroundEffect(effect);
 
             showWeatherCard();
