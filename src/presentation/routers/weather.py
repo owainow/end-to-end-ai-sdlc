@@ -2,11 +2,11 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.application.use_cases import GetWeatherUseCase
+from src.application.use_cases import GetForecastUseCase, GetWeatherUseCase
 from src.domain.entities import WeatherRequest
 from src.domain.value_objects import Coordinates, UnitSystem
-from src.presentation.dependencies import get_weather_use_case
-from src.presentation.schemas import WeatherResponse
+from src.presentation.dependencies import get_forecast_use_case, get_weather_use_case
+from src.presentation.schemas import ForecastResponse, WeatherResponse
 
 router = APIRouter(prefix="/weather", tags=["Weather"])
 
@@ -111,4 +111,114 @@ async def get_weather(
         icon_code=weather_data.icon_code,
         units=weather_data.units,
         timestamp=weather_data.timestamp,
+    )
+
+
+forecast_router = APIRouter(prefix="/forecast", tags=["Forecast"])
+
+
+@forecast_router.get(
+    "",
+    response_model=ForecastResponse,
+    summary="Get 5-day forecast",
+    description="Retrieve a 5-day daily weather forecast for a specified city or coordinates.",
+    responses={
+        200: {"description": "Forecast data retrieved successfully"},
+        400: {"description": "Invalid request parameters"},
+        404: {"description": "City not found"},
+        422: {"description": "Validation error"},
+        429: {"description": "Rate limit exceeded"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def get_forecast(
+    city: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+        description="City name to get forecast for",
+        examples=["London", "New York", "Tokyo"],
+    ),
+    lat: float | None = Query(
+        default=None,
+        ge=-90,
+        le=90,
+        description="Latitude coordinate (must be provided with lon)",
+    ),
+    lon: float | None = Query(
+        default=None,
+        ge=-180,
+        le=180,
+        description="Longitude coordinate (must be provided with lat)",
+    ),
+    units: UnitSystem = Query(
+        default=UnitSystem.METRIC,
+        description="Temperature units: metric (Celsius) or imperial (Fahrenheit)",
+    ),
+    use_case: GetForecastUseCase = Depends(get_forecast_use_case),
+) -> ForecastResponse:
+    """Get 5-day forecast for a city or coordinates.
+
+    Args:
+        city: The city name to query.
+        lat: Latitude coordinate.
+        lon: Longitude coordinate.
+        units: The temperature unit system.
+        use_case: Injected GetForecastUseCase.
+
+    Returns:
+        ForecastResponse with daily forecasts.
+
+    Raises:
+        HTTPException: If validation fails or coordinates are incomplete.
+    """
+    # Validate coordinate parameters
+    if (lat is None) != (lon is None):
+        raise HTTPException(
+            status_code=422,
+            detail="Both lat and lon must be provided together, or neither",
+        )
+
+    # Prefer coordinates over city if both provided
+    coordinates = None
+    if lat is not None and lon is not None:
+        try:
+            coordinates = Coordinates(latitude=lat, longitude=lon)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e)) from e
+
+    # Require either coordinates or city
+    if not coordinates and not city:
+        raise HTTPException(
+            status_code=422,
+            detail="Either city or coordinates (lat and lon) must be provided",
+        )
+
+    request = WeatherRequest(
+        city=city or "", units=units, coordinates=coordinates
+    )
+    forecast_data = await use_case.execute(request)
+
+    return ForecastResponse(
+        city=forecast_data.city_name,
+        country=forecast_data.country,
+        coordinates={
+            "latitude": forecast_data.coordinates.latitude,
+            "longitude": forecast_data.coordinates.longitude,
+        },
+        units=forecast_data.units,
+        days=[
+            {
+                "date": day.date,
+                "day_label": day.day_label,
+                "temp_high": day.temp_high,
+                "temp_low": day.temp_low,
+                "humidity": day.humidity,
+                "wind_speed": day.wind_speed,
+                "description": day.description,
+                "icon_code": day.icon_code,
+            }
+            for day in forecast_data.days
+        ],
+        timestamp=forecast_data.timestamp,
     )

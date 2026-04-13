@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from src.application.use_cases import GetWeatherUseCase
+from src.application.use_cases import GetForecastUseCase, GetWeatherUseCase
 from src.infrastructure.cache import InMemoryCache
 from src.infrastructure.config import get_settings
 from src.infrastructure.logging import StructlogAdapter
@@ -48,4 +48,15 @@ def get_weather_use_case() -> GetWeatherUseCase:
         cache=get_cache(),
         logger=get_logger(),
         cache_ttl_seconds=settings.cache_ttl_seconds,
+    )
+
+
+def get_forecast_use_case() -> GetForecastUseCase:
+    """Get the GetForecastUseCase with all dependencies."""
+    settings = get_settings()
+    return GetForecastUseCase(
+        forecast_provider=get_weather_provider(),
+        cache=get_cache(),
+        logger=get_logger(),
+        cache_ttl_seconds=settings.forecast_cache_ttl_seconds,
     )
