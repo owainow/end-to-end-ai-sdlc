@@ -218,7 +218,7 @@ class OpenWeatherMapClient(WeatherProviderPort, ForecastProviderPort):
         sorted_dates = sorted(daily.keys())
         today_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
-        for i, date_str in enumerate(sorted_dates[:5]):
+        for date_str in sorted_dates[:5]:
             entries = daily[date_str]
 
             # Aggregate metrics across the day's entries
@@ -253,10 +253,6 @@ class OpenWeatherMapClient(WeatherProviderPort, ForecastProviderPort):
                     day_label = day_dt.strftime("%a")
                 except ValueError:
                     day_label = date_str
-
-            # If sorting puts today as index 0 even if not matching today_str
-            if i == 0 and day_label != "Today":
-                day_label = "Today"
 
             days.append(
                 ForecastDay(

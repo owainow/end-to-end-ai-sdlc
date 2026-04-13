@@ -1411,7 +1411,7 @@
                     renderForecast(forecast.value);
                 } else if (weather.status === 'fulfilled') {
                     // T024: show inline forecast error if weather succeeded
-                    showForecastError('Unable to load forecast. ' + forecast.reason.message);
+                    showForecastError(`Unable to load forecast: ${forecast.reason.message}`);
                 }
             } finally {
                 state.loading = false;
@@ -1458,7 +1458,7 @@
                         state.forecast = forecast.value;
                         renderForecast(forecast.value);
                     } else if (weather.status === 'fulfilled') {
-                        showForecastError('Unable to reload forecast. ' + forecast.reason.message);
+                        showForecastError(`Unable to reload forecast: ${forecast.reason.message}`);
                     }
                 } finally {
                     state.loading = false;
@@ -1606,7 +1606,7 @@
                             state.forecast = forecastResult.value;
                             renderForecast(forecastResult.value);
                         } else if (weatherResult.status === 'fulfilled') {
-                            showForecastError('Unable to load forecast. ' + forecastResult.reason.message);
+                            showForecastError(`Unable to load forecast: ${forecastResult.reason.message}`);
                         }
                     } catch (error) {
                         state.error = error.message;
