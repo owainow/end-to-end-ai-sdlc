@@ -1,7 +1,7 @@
 """Domain entities for the Weather App."""
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 
 from src.domain.value_objects import Coordinates, UnitSystem
 
@@ -70,3 +70,63 @@ class WeatherRequest:
             return f"weather:coords:{lat},{lon}:{self.units.value}"
         normalized_city = self.city.strip().lower()
         return f"weather:{normalized_city}:{self.units.value}"
+
+    @property
+    def forecast_cache_key(self) -> str:
+        """Generate forecast cache key for this request."""
+        if self.coordinates:
+            lat = round(self.coordinates.latitude, 2)
+            lon = round(self.coordinates.longitude, 2)
+            return f"forecast:coords:{lat},{lon}:{self.units.value}"
+        normalized_city = self.city.strip().lower()
+        return f"forecast:{normalized_city}:{self.units.value}"
+
+
+@dataclass(frozen=True)
+class ForecastDay:
+    """Forecast data entity for a single day."""
+
+    date: str
+    day_label: str
+    temp_high: float
+    temp_low: float
+    humidity: int
+    wind_speed: float
+    description: str
+    icon_code: str
+    units: UnitSystem
+
+    @property
+    def temp_high_display(self) -> str:
+        """Return formatted high temperature with unit symbol."""
+        symbol = "°C" if self.units == UnitSystem.METRIC else "°F"
+        return f"{self.temp_high:.1f}{symbol}"
+
+    @property
+    def temp_low_display(self) -> str:
+        """Return formatted low temperature with unit symbol."""
+        symbol = "°C" if self.units == UnitSystem.METRIC else "°F"
+        return f"{self.temp_low:.1f}{symbol}"
+
+    @property
+    def wind_speed_display(self) -> str:
+        """Return formatted wind speed with unit."""
+        unit = "m/s" if self.units == UnitSystem.METRIC else "mph"
+        return f"{self.wind_speed:.1f} {unit}"
+
+
+@dataclass(frozen=True)
+class ForecastData:
+    """Forecast data entity representing a 5-day forecast."""
+
+    city_name: str
+    country: str
+    coordinates: Coordinates
+    days: list[ForecastDay] = field(default_factory=list)
+    units: UnitSystem = UnitSystem.METRIC
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+    @property
+    def location_display(self) -> str:
+        """Return formatted location string."""
+        return f"{self.city_name}, {self.country}"

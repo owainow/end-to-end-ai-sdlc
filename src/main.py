@@ -34,7 +34,7 @@ def create_app() -> FastAPI:
     from src.infrastructure.config import get_settings
     from src.presentation.exception_handlers import register_exception_handlers
     from src.presentation.middleware import RequestLoggingMiddleware
-    from src.presentation.routers import health_router, weather_router
+    from src.presentation.routers import forecast_router, health_router, weather_router
 
     settings = get_settings()
 
@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(health_router)
     app.include_router(weather_router, prefix=f"/api/{settings.api_version}")
+    app.include_router(forecast_router, prefix=f"/api/{settings.api_version}")
 
     # Serve static files (must be last, catches all unmatched routes)
     static_dir = Path(__file__).parent.parent / "static"
