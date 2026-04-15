@@ -79,6 +79,28 @@
             animation: slideDown 0.2s ease-out;
         }
         
+        details[open] #history-container {
+            animation: slideDown 0.2s ease-out;
+        }
+        
+        .history-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .history-entry:hover,
+        .history-entry:focus {
+            background-color: #F3F4F6;
+            outline: none;
+        }
+        
         @keyframes slideDown {
             from {
                 opacity: 0;
@@ -365,6 +387,14 @@
                 </div>
             </div>
             
+            <!-- Recent History -->
+            <details id="history-section" class="hidden mt-6 bg-white rounded-lg border border-gray-200 overflow-hidden fade-in">
+                <summary class="px-6 py-4 font-medium text-gray-800 transition-colors">Recent History</summary>
+                <div id="history-container" aria-label="Search history list" class="px-6 pb-4 space-y-1">
+                    <p id="history-empty" role="status" aria-live="polite" class="text-sm text-gray-500">No recent searches yet</p>
+                </div>
+            </details>
+            
         </main>
         
         </div><!-- End Weather View -->
@@ -430,14 +460,20 @@
             error: null,
             currentView: 'weather', // T010: track current view
             geolocating: false, // T006: track geolocation state
-            backgroundEffect: null // T005: track current background effect
+            backgroundEffect: null, // T005: track current background effect
+            searchHistory: []
         };
 
         // ============================================
         // Constants
         // ============================================
         const STORAGE_KEYS = {
-            UNITS: 'weatherUnits'
+            UNITS: 'weatherUnits',
+            SEARCH_HISTORY: 'searchHistory'
+        };
+        
+        const HISTORY_CONFIG = {
+            MAX_HISTORY_ENTRIES: 5
         };
         
         // Rain animation constants
@@ -648,6 +684,9 @@
             errorContainer: document.getElementById('error-container'),
             errorMessage: document.getElementById('error-message'),
             weatherCard: document.getElementById('weather-card'),
+            historySection: document.getElementById('history-section'),
+            historyContainer: document.getElementById('history-container'),
+            historyEmpty: document.getElementById('history-empty'),
 
             // Weather data
             cityName: document.getElementById('city-name'),
@@ -923,6 +962,67 @@
         function saveUnits(units) {
             localStorage.setItem(STORAGE_KEYS.UNITS, units);
         }
+        
+        function getStoredHistory() {
+            try {
+                const stored = sessionStorage.getItem(STORAGE_KEYS.SEARCH_HISTORY);
+                
+                if (!stored) {
+                    return [];
+                }
+                
+                const parsed = JSON.parse(stored);
+                
+                if (!Array.isArray(parsed)) {
+                    return [];
+                }
+                
+                return parsed
+                    .filter(entry => (
+                        entry
+                        && typeof entry.city === 'string'
+                        && typeof entry.temperature === 'number'
+                        && typeof entry.iconCode === 'string'
+                        && (entry.units === 'metric' || entry.units === 'imperial')
+                    ))
+                    .slice(0, HISTORY_CONFIG.MAX_HISTORY_ENTRIES);
+            } catch {
+                return [];
+            }
+        }
+        
+        function saveHistory(entries) {
+            try {
+                sessionStorage.setItem(STORAGE_KEYS.SEARCH_HISTORY, JSON.stringify(entries));
+            } catch {
+                // Ignore storage errors to avoid breaking weather functionality
+            }
+        }
+        
+        function addSearchHistoryEntry(city, temperature, iconCode, units) {
+            const normalizedCity = city.trim().toLowerCase();
+            const deduplicatedHistory = state.searchHistory.filter(
+                entry => entry.city.toLowerCase() !== normalizedCity
+            );
+            
+            const newEntry = {
+                city,
+                temperature,
+                iconCode,
+                units,
+                timestamp: new Date().toISOString()
+            };
+            
+            const updatedHistory = [newEntry, ...deduplicatedHistory]
+                .slice(0, HISTORY_CONFIG.MAX_HISTORY_ENTRIES);
+            
+            state.searchHistory = updatedHistory;
+            saveHistory(updatedHistory);
+        }
+        
+        function getSearchHistory() {
+            return state.searchHistory;
+        }
 
         // ============================================
         // Validation Functions
@@ -1043,6 +1143,55 @@
 
             showWeatherCard();
         }
+        
+        function renderSearchHistory() {
+            const history = getSearchHistory();
+            
+            elements.historyContainer.querySelectorAll('.history-entry').forEach(entry => entry.remove());
+            
+            if (history.length === 0) {
+                elements.historySection.classList.add('hidden');
+                elements.historyEmpty.classList.remove('hidden');
+                return;
+            }
+            
+            elements.historySection.classList.remove('hidden');
+            elements.historyEmpty.classList.add('hidden');
+            
+            history.forEach(entry => {
+                const historyEntry = document.createElement('div');
+                const iconClass = getWeatherIconClass(entry.iconCode);
+                const colorClass = getIconColorClass(iconClass);
+                const historyMeta = document.createElement('div');
+                const weatherIcon = document.createElement('i');
+                const cityName = document.createElement('span');
+                const temperature = document.createElement('span');
+                
+                historyEntry.className = 'history-entry';
+                historyEntry.setAttribute('role', 'button');
+                historyEntry.setAttribute('tabindex', '0');
+                historyEntry.setAttribute('aria-label', `Search weather for ${entry.city}`);
+                historyEntry.dataset.city = entry.city;
+                
+                historyMeta.className = 'flex items-center gap-3 min-w-0';
+                
+                weatherIcon.className = `wi ${iconClass} ${colorClass} text-2xl`;
+                weatherIcon.setAttribute('aria-hidden', 'true');
+                
+                cityName.className = 'text-gray-800 truncate';
+                cityName.textContent = entry.city;
+                
+                temperature.className = 'font-medium text-gray-600';
+                temperature.textContent = formatTemperature(entry.temperature, entry.units);
+                
+                historyMeta.appendChild(weatherIcon);
+                historyMeta.appendChild(cityName);
+                historyEntry.appendChild(historyMeta);
+                historyEntry.appendChild(temperature);
+                
+                elements.historyContainer.insertBefore(historyEntry, elements.historyEmpty);
+            });
+        }
 
         // ============================================
         // API Functions
@@ -1147,6 +1296,8 @@
                 state.weather = weather;
                 state.error = null;
                 renderWeatherCard(weather);
+                addSearchHistoryEntry(weather.city, weather.temperature, weather.icon_code, weather.units);
+                renderSearchHistory();
             } catch (error) {
                 state.error = error.message;
                 state.weather = null;
@@ -1215,6 +1366,25 @@
         
         function handleInputChange() {
             hideValidationError();
+        }
+        
+        async function handleHistoryEntrySelect(city) {
+            showLoading();
+            
+            try {
+                const weather = await fetchWeather(city, state.units);
+                state.weather = weather;
+                state.city = weather.city;
+                state.error = null;
+                elements.cityInput.value = weather.city;
+                renderWeatherCard(weather);
+                addSearchHistoryEntry(weather.city, weather.temperature, weather.icon_code, weather.units);
+                renderSearchHistory();
+            } catch (error) {
+                state.error = error.message;
+                state.weather = null;
+                showError(error.message);
+            }
         }
         
         // ============================================
@@ -1304,6 +1474,8 @@
                         
                         // Render weather card
                         renderWeatherCard(weather);
+                        addSearchHistoryEntry(weather.city, weather.temperature, weather.icon_code, weather.units);
+                        renderSearchHistory();
                     } catch (error) {
                         state.error = error.message;
                         state.weather = null;
@@ -1346,7 +1518,9 @@
         function init() {
             // Load stored preferences
             state.units = getStoredUnits();
+            state.searchHistory = getStoredHistory();
             updateToggleUI();
+            renderSearchHistory();
             
             // Render help content (T016)
             renderQuickTips();
@@ -1355,6 +1529,27 @@
             // Event listeners
             elements.searchForm.addEventListener('submit', handleSearch);
             elements.cityInput.addEventListener('input', handleInputChange);
+            elements.historyContainer.addEventListener('click', async (event) => {
+                const historyEntry = event.target.closest('.history-entry');
+                if (!historyEntry) return;
+                
+                const { city } = historyEntry.dataset;
+                if (!city) return;
+                
+                await handleHistoryEntrySelect(city);
+            });
+            elements.historyContainer.addEventListener('keydown', async (event) => {
+                const historyEntry = event.target.closest('.history-entry');
+                if (!historyEntry) return;
+                
+                if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+                
+                event.preventDefault();
+                const { city } = historyEntry.dataset;
+                if (!city) return;
+                
+                await handleHistoryEntrySelect(city);
+            });
 
             elements.unitMetric.addEventListener('click', () => handleUnitChange('metric'));
             elements.unitImperial.addEventListener('click', () => handleUnitChange('imperial'));
