@@ -1,7 +1,7 @@
 """Domain entities for the Weather App."""
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 
 from src.domain.value_objects import Coordinates, UnitSystem
 
@@ -40,6 +40,51 @@ class WeatherData:
     def location_display(self) -> str:
         """Return formatted location string."""
         return f"{self.city_name}, {self.country}"
+
+
+@dataclass(frozen=True)
+class ForecastDay:
+    """Daily weather forecast summary."""
+
+    date: date
+    day_label: str
+    temp_high: float
+    temp_low: float
+    humidity: int
+    wind_speed: float
+    description: str
+    icon_code: str
+    units: UnitSystem
+
+    @property
+    def temp_high_display(self) -> str:
+        """Return formatted high temperature with unit symbol."""
+        symbol = "°C" if self.units == UnitSystem.METRIC else "°F"
+        return f"{self.temp_high:.1f}{symbol}"
+
+    @property
+    def temp_low_display(self) -> str:
+        """Return formatted low temperature with unit symbol."""
+        symbol = "°C" if self.units == UnitSystem.METRIC else "°F"
+        return f"{self.temp_low:.1f}{symbol}"
+
+    @property
+    def wind_speed_display(self) -> str:
+        """Return formatted wind speed with unit."""
+        unit = "m/s" if self.units == UnitSystem.METRIC else "mph"
+        return f"{self.wind_speed:.1f} {unit}"
+
+
+@dataclass(frozen=True)
+class ForecastData:
+    """Forecast data entity representing multi-day weather conditions."""
+
+    city_name: str
+    country: str
+    coordinates: Coordinates
+    days: list[ForecastDay]
+    units: UnitSystem
+    timestamp: datetime
 
 
 @dataclass(frozen=True)

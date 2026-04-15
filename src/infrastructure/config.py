@@ -34,6 +34,12 @@ class Settings(BaseSettings):
         le=3600,
         description="Cache TTL in seconds (15 minutes default)",
     )
+    forecast_cache_ttl_seconds: int = Field(
+        default=1800,
+        ge=60,
+        le=3600,
+        description="Forecast cache TTL in seconds (30 minutes default)",
+    )
 
     # Logging
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(

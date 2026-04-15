@@ -6,7 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from src.domain.entities import WeatherData
+from src.domain.entities import ForecastData, ForecastDay, WeatherData
+from src.domain.exceptions import CityNotFoundError
 from src.domain.value_objects import Coordinates, UnitSystem
 
 
@@ -25,6 +26,42 @@ def sample_weather_data() -> WeatherData:
         visibility=10000,
         description="scattered clouds",
         icon_code="03d",
+        units=UnitSystem.METRIC,
+        timestamp=datetime.now(UTC),
+    )
+
+
+@pytest.fixture
+def sample_forecast_data() -> ForecastData:
+    """Create sample forecast data for mocking."""
+    return ForecastData(
+        city_name="London",
+        country="GB",
+        coordinates=Coordinates(latitude=51.5074, longitude=-0.1278),
+        days=[
+            ForecastDay(
+                date=datetime(2026, 4, 15, tzinfo=UTC).date(),
+                day_label="Today",
+                temp_high=16.0,
+                temp_low=8.0,
+                humidity=70,
+                wind_speed=5.0,
+                description="clear sky",
+                icon_code="01d",
+                units=UnitSystem.METRIC,
+            ),
+            ForecastDay(
+                date=datetime(2026, 4, 16, tzinfo=UTC).date(),
+                day_label="Thu",
+                temp_high=17.0,
+                temp_low=9.0,
+                humidity=65,
+                wind_speed=6.0,
+                description="few clouds",
+                icon_code="02d",
+                units=UnitSystem.METRIC,
+            ),
+        ],
         units=UnitSystem.METRIC,
         timestamp=datetime.now(UTC),
     )
@@ -151,8 +188,6 @@ class TestWeatherEndpoint:
     @pytest.mark.asyncio
     async def test_get_weather_city_not_found(self) -> None:
         """Test weather request for non-existent city."""
-        from src.domain.exceptions import CityNotFoundError
-
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(
             side_effect=CityNotFoundError("InvalidCity123")
@@ -317,3 +352,89 @@ class TestWeatherEndpoint:
             "Either city or coordinates" in data["detail"]
             or "Field required" in str(data)
         )
+
+
+class TestForecastEndpoint:
+    """Tests for the forecast endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_get_forecast_success(
+        self, sample_forecast_data: ForecastData
+    ) -> None:
+        """Test successful forecast retrieval."""
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(return_value=sample_forecast_data)
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_forecast_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_forecast_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/forecast?city=London")
+
+                assert response.status_code == 200
+                data = response.json()
+                assert data["city"] == "London"
+                assert data["country"] == "GB"
+                assert len(data["days"]) == 2
+                assert data["days"][0]["day_label"] == "Today"
+
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_get_forecast_city_not_found(self) -> None:
+        """Test forecast request for non-existent city."""
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(
+            side_effect=CityNotFoundError("InvalidCity123")
+        )
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_forecast_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_forecast_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/forecast?city=InvalidCity123")
+
+                assert response.status_code == 404
+                data = response.json()
+                assert data["error"]["code"] == "CITY_NOT_FOUND"
+
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_get_forecast_with_coordinates(
+        self, sample_forecast_data: ForecastData
+    ) -> None:
+        """Test forecast retrieval with coordinates."""
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(return_value=sample_forecast_data)
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_forecast_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_forecast_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get(
+                    "/api/v1/forecast?lat=51.5074&lon=-0.1278&units=metric"
+                )
+
+                assert response.status_code == 200
+                call_args = mock_use_case.execute.call_args[0][0]
+                assert call_args.coordinates is not None
+                assert call_args.coordinates.latitude == 51.5074
+                assert call_args.coordinates.longitude == -0.1278
+
+            app.dependency_overrides.clear()

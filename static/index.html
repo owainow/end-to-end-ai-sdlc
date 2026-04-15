@@ -177,6 +177,49 @@
             position: relative;
             z-index: 10;
         }
+
+        #forecast-details > div {
+            animation: fadeIn 0.25s ease-out;
+        }
+
+        .forecast-day-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            background-color: #f9fafb;
+        }
+
+        .forecast-main {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .forecast-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #4b5563;
+            font-size: 0.875rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .forecast-day-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .forecast-meta {
+                justify-content: flex-start;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -363,6 +406,25 @@
                     <p id="description" class="text-center text-xl text-gray-600 capitalize"></p>
                     
                 </div>
+
+                <section id="forecast-section" class="hidden mt-4" aria-labelledby="forecast-summary">
+                    <details id="forecast-details" class="bg-white rounded-2xl shadow-xl overflow-hidden" open>
+                        <summary id="forecast-summary" class="px-6 py-4 font-medium text-gray-800 transition-colors">
+                            5-Day Forecast
+                        </summary>
+                        <div class="px-6 pb-6">
+                            <div id="forecast-loading" class="hidden py-6">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent mb-3"></div>
+                                    <p class="text-gray-500 text-sm">Loading forecast...</p>
+                                </div>
+                            </div>
+
+                            <div id="forecast-error" class="hidden text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm mb-3" role="alert"></div>
+                            <div id="forecast-container" class="space-y-3"></div>
+                        </div>
+                    </details>
+                </section>
             </div>
             
         </main>
@@ -424,7 +486,9 @@
         // ============================================
         const state = {
             city: '',
+            coordinates: null,
             weather: null,
+            forecast: null,
             units: 'metric',
             loading: false,
             error: null,
@@ -648,6 +712,11 @@
             errorContainer: document.getElementById('error-container'),
             errorMessage: document.getElementById('error-message'),
             weatherCard: document.getElementById('weather-card'),
+            forecastSection: document.getElementById('forecast-section'),
+            forecastDetails: document.getElementById('forecast-details'),
+            forecastContainer: document.getElementById('forecast-container'),
+            forecastLoading: document.getElementById('forecast-loading'),
+            forecastError: document.getElementById('forecast-error'),
 
             // Weather data
             cityName: document.getElementById('city-name'),
@@ -1044,9 +1113,95 @@
             showWeatherCard();
         }
 
+        function resetForecastSection() {
+            elements.forecastSection.classList.add('hidden');
+            elements.forecastContainer.innerHTML = '';
+            elements.forecastError.textContent = '';
+            elements.forecastError.classList.add('hidden');
+            elements.forecastLoading.classList.add('hidden');
+            elements.forecastDetails.open = false;
+        }
+
+        function showForecastLoading() {
+            elements.forecastSection.classList.remove('hidden');
+            elements.forecastDetails.open = true;
+            elements.forecastContainer.innerHTML = '';
+            elements.forecastError.classList.add('hidden');
+            elements.forecastLoading.classList.remove('hidden');
+        }
+
+        function showForecastError(message) {
+            elements.forecastSection.classList.remove('hidden');
+            elements.forecastLoading.classList.add('hidden');
+            elements.forecastContainer.innerHTML = '';
+            elements.forecastError.textContent = message;
+            elements.forecastError.classList.remove('hidden');
+        }
+
+        function renderForecast(forecast) {
+            elements.forecastLoading.classList.add('hidden');
+            elements.forecastError.classList.add('hidden');
+            elements.forecastContainer.innerHTML = '';
+            elements.forecastSection.classList.remove('hidden');
+
+            if (!forecast.days || forecast.days.length === 0) {
+                showForecastError('Forecast data is currently unavailable for this location.');
+                return;
+            }
+
+            const rows = forecast.days.map((day) => {
+                const iconClass = getWeatherIconClass(day.icon_code);
+                const colorClass = getIconColorClass(iconClass);
+
+                return `
+                    <div class="forecast-day-row">
+                        <div class="forecast-main">
+                            <div class="min-w-[54px]">
+                                <p class="font-semibold text-gray-800">${day.day_label}</p>
+                            </div>
+                            <i class="wi ${iconClass} ${colorClass} text-2xl" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-700">
+                                    <span class="sr-only">High temperature </span>
+                                    <span>${formatTemperature(day.temp_high, forecast.units)}</span>
+                                    /
+                                    <span class="sr-only">Low temperature </span>
+                                    <span>${formatTemperature(day.temp_low, forecast.units)}</span>
+                                </p>
+                                <p class="text-sm text-gray-500 capitalize">${capitalizeFirst(day.description)}</p>
+                            </div>
+                        </div>
+                        <div class="forecast-meta">
+                            <span>
+                                <span aria-hidden="true">💧</span>
+                                <span class="sr-only">Humidity </span>${day.humidity}%
+                            </span>
+                            <span>
+                                <span aria-hidden="true">💨</span>
+                                <span class="sr-only">Wind speed </span>${formatWindSpeed(day.wind_speed, forecast.units)}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            elements.forecastContainer.innerHTML = rows;
+            elements.forecastDetails.open = true;
+        }
+
         // ============================================
         // API Functions
         // ============================================
+
+        function extractApiErrorMessage(errorData) {
+            if (errorData?.error?.message) {
+                return errorData.error.message;
+            }
+            if (errorData?.detail) {
+                return errorData.detail;
+            }
+            return null;
+        }
         
         async function fetchWeather(city, units) {
             const url = `/api/v1/weather?city=${encodeURIComponent(city)}&units=${units}`;
@@ -1059,15 +1214,16 @@
 
                     try {
                         const errorData = await response.json();
+                        const apiMessage = extractApiErrorMessage(errorData);
                         
                         if (response.status === 404) {
-                            errorMessage = errorData.detail || 'City not found. Please check the spelling and try again.';
+                            errorMessage = apiMessage || 'City not found. Please check the spelling and try again.';
                         } else if (response.status === 429) {
                             errorMessage = 'Too many requests. Please wait a moment and try again.';
                         } else if (response.status === 502) {
                             errorMessage = 'Weather service is temporarily unavailable. Please try again later.';
-                        } else if (errorData.detail) {
-                            errorMessage = errorData.detail;
+                        } else if (apiMessage) {
+                            errorMessage = apiMessage;
                         }
                     } catch {
                         // JSON parsing failed, use default message
@@ -1098,13 +1254,53 @@
 
                     try {
                         const errorData = await response.json();
+                        const apiMessage = extractApiErrorMessage(errorData);
                         
                         if (response.status === 404) {
                             errorMessage = 'Weather data not available for your location.';
                         } else if (response.status === 429) {
                             errorMessage = 'Too many requests. Please wait a moment and try again.';
-                        } else if (errorData.detail) {
-                            errorMessage = errorData.detail;
+                        } else if (apiMessage) {
+                            errorMessage = apiMessage;
+                        }
+                    } catch {
+                        // JSON parsing failed, use default message
+                    }
+
+                    throw new Error(errorMessage);
+                }
+
+                return await response.json();
+            } catch (error) {
+                if (error instanceof TypeError) {
+                    throw new Error('Unable to connect. Please check your internet connection.');
+                }
+                throw error;
+            }
+        }
+
+        async function fetchForecast(city = null, units, lat = null, lon = null) {
+            const params = new URLSearchParams({ units });
+            if (lat !== null && lon !== null) {
+                params.set('lat', String(lat));
+                params.set('lon', String(lon));
+            } else if (city) {
+                params.set('city', city);
+            }
+
+            const url = `/api/v1/forecast?${params.toString()}`;
+
+            try {
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    let errorMessage = 'Unable to get forecast data right now.';
+
+                    try {
+                        const errorData = await response.json();
+                        const apiMessage = extractApiErrorMessage(errorData);
+                        if (apiMessage) {
+                            errorMessage = apiMessage;
                         }
                     } catch {
                         // JSON parsing failed, use default message
@@ -1139,17 +1335,38 @@
             }
 
             state.city = city.trim();
+            state.coordinates = null;
+            state.forecast = null;
+            resetForecastSection();
             state.loading = true;
             showLoading();
+            showForecastLoading();
 
             try {
-                const weather = await fetchWeather(state.city, state.units);
-                state.weather = weather;
+                const [weatherResult, forecastResult] = await Promise.allSettled([
+                    fetchWeather(state.city, state.units),
+                    fetchForecast(state.city, state.units),
+                ]);
+
+                if (weatherResult.status !== 'fulfilled') {
+                    throw weatherResult.reason;
+                }
+
+                state.weather = weatherResult.value;
                 state.error = null;
-                renderWeatherCard(weather);
+                renderWeatherCard(weatherResult.value);
+
+                if (forecastResult.status === 'fulfilled') {
+                    state.forecast = forecastResult.value;
+                    renderForecast(forecastResult.value);
+                } else {
+                    showForecastError(forecastResult.reason.message);
+                }
             } catch (error) {
                 state.error = error.message;
                 state.weather = null;
+                state.forecast = null;
+                resetForecastSection();
                 showError(error.message);
             } finally {
                 state.loading = false;
@@ -1167,12 +1384,42 @@
             if (state.city && state.weather) {
                 state.loading = true;
                 showLoading();
+                showForecastLoading();
 
                 try {
-                    const weather = await fetchWeather(state.city, state.units);
-                    state.weather = weather;
+                    const hasCoordinates = state.coordinates !== null;
+                    const [weatherResult, forecastResult] = await Promise.allSettled([
+                        hasCoordinates
+                            ? fetchWeatherByCoords(
+                                state.coordinates.lat,
+                                state.coordinates.lon,
+                                state.units
+                            )
+                            : fetchWeather(state.city, state.units),
+                        hasCoordinates
+                            ? fetchForecast(
+                                null,
+                                state.units,
+                                state.coordinates.lat,
+                                state.coordinates.lon
+                            )
+                            : fetchForecast(state.city, state.units),
+                    ]);
+
+                    if (weatherResult.status !== 'fulfilled') {
+                        throw weatherResult.reason;
+                    }
+
+                    state.weather = weatherResult.value;
                     state.error = null;
-                    renderWeatherCard(weather);
+                    renderWeatherCard(weatherResult.value);
+
+                    if (forecastResult.status === 'fulfilled') {
+                        state.forecast = forecastResult.value;
+                        renderForecast(forecastResult.value);
+                    } else {
+                        showForecastError(forecastResult.reason.message);
+                    }
                 } catch (error) {
                     state.error = error.message;
                     showError(error.message);
@@ -1290,13 +1537,23 @@
                     try {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        
-                        // Fetch weather using coordinates
-                        const weather = await fetchWeatherByCoords(lat, lon, state.units);
-                        
-                        // Update state and UI
+
+                        resetForecastSection();
+                        showForecastLoading();
+
+                        const [weatherResult, forecastResult] = await Promise.allSettled([
+                            fetchWeatherByCoords(lat, lon, state.units),
+                            fetchForecast(null, state.units, lat, lon),
+                        ]);
+
+                        if (weatherResult.status !== 'fulfilled') {
+                            throw weatherResult.reason;
+                        }
+
+                        const weather = weatherResult.value;
                         state.weather = weather;
                         state.city = weather.city;
+                        state.coordinates = { lat, lon };
                         state.error = null;
                         
                         // Update city input with detected location
@@ -1304,9 +1561,18 @@
                         
                         // Render weather card
                         renderWeatherCard(weather);
+
+                        if (forecastResult.status === 'fulfilled') {
+                            state.forecast = forecastResult.value;
+                            renderForecast(forecastResult.value);
+                        } else {
+                            showForecastError(forecastResult.reason.message);
+                        }
                     } catch (error) {
                         state.error = error.message;
                         state.weather = null;
+                        state.forecast = null;
+                        resetForecastSection();
                         showError(error.message);
                     } finally {
                         state.geolocating = false;
@@ -1347,6 +1613,7 @@
             // Load stored preferences
             state.units = getStoredUnits();
             updateToggleUI();
+            resetForecastSection();
             
             // Render help content (T016)
             renderQuickTips();
