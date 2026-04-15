@@ -1,10 +1,10 @@
 """Unit tests for domain entities."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 
-from src.domain.entities import WeatherData, WeatherRequest
+from src.domain.entities import ForecastData, ForecastDay, WeatherData, WeatherRequest
 from src.domain.value_objects import Coordinates, UnitSystem
 
 
@@ -175,3 +175,71 @@ class TestWeatherData:
     def test_location_display(self, weather_data: WeatherData) -> None:
         """Test location display."""
         assert weather_data.location_display == "London, GB"
+
+
+class TestForecastDay:
+    """Tests for ForecastDay entity."""
+
+    def test_temperature_displays_metric(self) -> None:
+        """Test high/low temperature display for metric units."""
+        day = ForecastDay(
+            date=date(2026, 4, 15),
+            day_label="Today",
+            temp_high=16.3,
+            temp_low=8.4,
+            humidity=70,
+            wind_speed=5.2,
+            description="clear sky",
+            icon_code="01d",
+            units=UnitSystem.METRIC,
+        )
+
+        assert day.temp_high_display == "16.3°C"
+        assert day.temp_low_display == "8.4°C"
+
+    def test_wind_speed_display_imperial(self) -> None:
+        """Test wind speed display for imperial units."""
+        day = ForecastDay(
+            date=date(2026, 4, 16),
+            day_label="Thu",
+            temp_high=61.0,
+            temp_low=49.5,
+            humidity=65,
+            wind_speed=10.8,
+            description="few clouds",
+            icon_code="02d",
+            units=UnitSystem.IMPERIAL,
+        )
+
+        assert day.wind_speed_display == "10.8 mph"
+
+
+class TestForecastData:
+    """Tests for ForecastData entity."""
+
+    def test_forecast_data_fields(self) -> None:
+        """Test creating forecast data with day list."""
+        days = [
+            ForecastDay(
+                date=date(2026, 4, 15),
+                day_label="Today",
+                temp_high=16.3,
+                temp_low=8.4,
+                humidity=70,
+                wind_speed=5.2,
+                description="clear sky",
+                icon_code="01d",
+                units=UnitSystem.METRIC,
+            )
+        ]
+        forecast = ForecastData(
+            city_name="London",
+            country="GB",
+            coordinates=Coordinates(latitude=51.5074, longitude=-0.1278),
+            days=days,
+            units=UnitSystem.METRIC,
+            timestamp=datetime.now(UTC),
+        )
+
+        assert forecast.city_name == "London"
+        assert len(forecast.days) == 1

@@ -1,6 +1,6 @@
 """Pydantic schemas for API request/response models."""
 
-from datetime import datetime
+import datetime as dt
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -44,7 +44,55 @@ class WeatherResponse(BaseModel):
     description: str = Field(..., description="Weather condition description")
     icon_code: str = Field(..., description="Weather icon code")
     units: UnitSystem = Field(..., description="Temperature units (metric/imperial)")
-    timestamp: datetime = Field(..., description="Data timestamp (UTC)")
+    timestamp: dt.datetime = Field(..., description="Data timestamp (UTC)")
+
+
+class ForecastDayResponse(BaseModel):
+    """Daily forecast response schema."""
+
+    date: dt.date = Field(..., description="Forecast date")
+    day_label: str = Field(..., description="Display label for day (Today, Mon, Tue)")
+    temp_high: float = Field(..., description="Daily high temperature")
+    temp_low: float = Field(..., description="Daily low temperature")
+    humidity: int = Field(..., ge=0, le=100, description="Average humidity percentage")
+    wind_speed: float = Field(..., ge=0, description="Peak wind speed")
+    description: str = Field(..., description="Dominant weather description")
+    icon_code: str = Field(..., description="Dominant weather icon code")
+
+
+class ForecastResponse(BaseModel):
+    """Forecast API response schema."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "city": "London",
+                "country": "GB",
+                "coordinates": {"latitude": 51.5074, "longitude": -0.1278},
+                "units": "metric",
+                "days": [
+                    {
+                        "date": "2026-04-15",
+                        "day_label": "Today",
+                        "temp_high": 16.1,
+                        "temp_low": 9.3,
+                        "humidity": 68,
+                        "wind_speed": 5.2,
+                        "description": "scattered clouds",
+                        "icon_code": "03d",
+                    }
+                ],
+            }
+        }
+    )
+
+    city: str = Field(..., description="City name")
+    country: str = Field(..., description="Country code (ISO 3166)")
+    coordinates: dict[str, float] = Field(
+        ..., description="Geographic coordinates (latitude, longitude)"
+    )
+    units: UnitSystem = Field(..., description="Temperature units (metric/imperial)")
+    days: list[ForecastDayResponse] = Field(..., description="Forecast days")
 
 
 class ErrorResponse(BaseModel):

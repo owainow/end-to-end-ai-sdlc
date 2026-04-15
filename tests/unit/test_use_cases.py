@@ -1,12 +1,12 @@
-"""Unit tests for the GetWeatherUseCase."""
+"""Unit tests for weather and forecast use cases."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.application.use_cases import GetWeatherUseCase
-from src.domain.entities import WeatherData, WeatherRequest
+from src.application.use_cases import GetForecastUseCase, GetWeatherUseCase
+from src.domain.entities import ForecastData, ForecastDay, WeatherData, WeatherRequest
 from src.domain.exceptions import CityNotFoundError
 from src.domain.value_objects import Coordinates, UnitSystem
 
@@ -120,4 +120,103 @@ class TestGetWeatherUseCase:
             await use_case.execute(request)
 
         assert exc_info.value.city == "InvalidCity"
+        mock_cache.set.assert_not_called()
+
+
+class TestGetForecastUseCase:
+    """Tests for GetForecastUseCase."""
+
+    @pytest.fixture
+    def mock_provider(self) -> MagicMock:
+        """Create a mock forecast provider."""
+        provider = MagicMock()
+        provider.get_forecast = AsyncMock()
+        return provider
+
+    @pytest.fixture
+    def mock_cache(self) -> MagicMock:
+        """Create a mock cache."""
+        cache = MagicMock()
+        cache.get = MagicMock(return_value=None)
+        cache.set = MagicMock()
+        return cache
+
+    @pytest.fixture
+    def mock_logger(self) -> MagicMock:
+        """Create a mock logger."""
+        return MagicMock()
+
+    @pytest.fixture
+    def forecast_data(self) -> ForecastData:
+        """Create sample forecast data."""
+        return ForecastData(
+            city_name="London",
+            country="GB",
+            coordinates=Coordinates(latitude=51.5074, longitude=-0.1278),
+            days=[
+                ForecastDay(
+                    date=date(2026, 4, 15),
+                    day_label="Today",
+                    temp_high=16.0,
+                    temp_low=8.0,
+                    humidity=70,
+                    wind_speed=5.0,
+                    description="clear sky",
+                    icon_code="01d",
+                    units=UnitSystem.METRIC,
+                )
+            ],
+            units=UnitSystem.METRIC,
+            timestamp=datetime.now(UTC),
+        )
+
+    @pytest.fixture
+    def use_case(
+        self, mock_provider: MagicMock, mock_cache: MagicMock, mock_logger: MagicMock
+    ) -> GetForecastUseCase:
+        """Create forecast use case with mocked dependencies."""
+        return GetForecastUseCase(
+            forecast_provider=mock_provider,
+            cache=mock_cache,
+            logger=mock_logger,
+            cache_ttl_seconds=1800,
+        )
+
+    @pytest.mark.asyncio
+    async def test_execute_cache_miss(
+        self,
+        use_case: GetForecastUseCase,
+        mock_provider: MagicMock,
+        mock_cache: MagicMock,
+        forecast_data: ForecastData,
+    ) -> None:
+        """Test forecast execution with cache miss."""
+        mock_cache.get.return_value = None
+        mock_provider.get_forecast.return_value = forecast_data
+
+        request = WeatherRequest(city="London")
+        result = await use_case.execute(request)
+
+        assert result.city_name == "London"
+        mock_provider.get_forecast.assert_called_once_with(request)
+        mock_cache.set.assert_called_once_with(
+            f"forecast:{request.cache_key}", forecast_data, 1800
+        )
+
+    @pytest.mark.asyncio
+    async def test_execute_cache_hit(
+        self,
+        use_case: GetForecastUseCase,
+        mock_provider: MagicMock,
+        mock_cache: MagicMock,
+        forecast_data: ForecastData,
+    ) -> None:
+        """Test forecast execution with cache hit."""
+        mock_cache.get.return_value = forecast_data
+
+        request = WeatherRequest(city="London")
+        result = await use_case.execute(request)
+
+        assert result.city_name == "London"
+        mock_provider.get_forecast.assert_not_called()
         mock_cache.set.assert_not_called()

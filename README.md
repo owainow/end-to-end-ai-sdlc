@@ -5,6 +5,7 @@ A real-time weather data API built with FastAPI following Clean Architecture pri
 ## Features
 
 - 🌡️ **Real-time weather data** - Get current weather conditions for any city
+- 📅 **5-day forecast** - View daily forecast summaries for today + next 4 days
 - 🔄 **Unit conversion** - Support for metric (°C) and imperial (°F) units
 - ⚡ **Caching** - 15-minute TTL cache to reduce API calls
 - 📊 **Structured logging** - JSON-formatted logs with structlog
@@ -155,6 +156,7 @@ Environment variables (see `.env.example`):
 |----------|-------------|---------|
 | `OPENWEATHERMAP_API_KEY` | OpenWeatherMap API key | Required |
 | `CACHE_TTL_SECONDS` | Cache TTL in seconds | 900 (15 min) |
+| `FORECAST_CACHE_TTL_SECONDS` | Forecast cache TTL in seconds | 1800 (30 min) |
 | `LOG_LEVEL` | Logging level | INFO |
 | `ENVIRONMENT` | Deployment environment | dev |
 

@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.domain.entities import WeatherData, WeatherRequest
+from src.domain.entities import ForecastData, WeatherData, WeatherRequest
 
 
 class WeatherProviderPort(ABC):
@@ -27,28 +27,49 @@ class WeatherProviderPort(ABC):
         ...
 
 
+class ForecastProviderPort(ABC):
+    """Port for weather forecast providers."""
+
+    @abstractmethod
+    async def get_forecast(self, request: WeatherRequest) -> ForecastData:
+        """Fetch forecast data for a city.
+
+        Args:
+            request: The weather request containing city and units.
+
+        Returns:
+            ForecastData entity with multi-day forecast.
+
+        Raises:
+            CityNotFoundError: If the city cannot be found.
+            WeatherProviderError: If the provider fails.
+            RateLimitExceededError: If rate limit is exceeded.
+        """
+        ...
+
+
 class CachePort(ABC):
     """Port for caching weather data."""
 
     @abstractmethod
-    def get(self, key: str) -> WeatherData | None:
-        """Retrieve cached weather data.
+    def get(self, key: str) -> Any | None:
+        """Retrieve cached data.
 
         Args:
             key: The cache key.
 
         Returns:
-            Cached WeatherData or None if not found/expired.
+            Cached value or None if not found/expired.
         """
         ...
 
     @abstractmethod
-    def set(self, key: str, value: WeatherData, ttl_seconds: int) -> None:
-        """Store weather data in cache.
+    def set(self, key: str, value: Any, ttl_seconds: int) -> None:
+        """Store data in cache.
 
         Args:
             key: The cache key.
-            value: The WeatherData to cache.
+            value: The value to cache.
             ttl_seconds: Time-to-live in seconds.
         """
         ...
