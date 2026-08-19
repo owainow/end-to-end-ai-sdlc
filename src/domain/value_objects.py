@@ -1,10 +1,10 @@
 """Value objects for the Weather App domain."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class UnitSystem(str, Enum):
+class UnitSystem(StrEnum):
     """Temperature unit systems."""
 
     METRIC = "metric"  # Celsius

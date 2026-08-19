@@ -45,7 +45,7 @@ class GetWeatherUseCase:
 
         # Try cache first
         cached_data = self._cache.get(cache_key)
-        if cached_data is not None:
+        if isinstance(cached_data, WeatherData):
             self._logger.debug(
                 "Cache hit",
                 city=request.city,

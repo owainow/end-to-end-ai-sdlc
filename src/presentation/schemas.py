@@ -47,6 +47,80 @@ class WeatherResponse(BaseModel):
     timestamp: datetime = Field(..., description="Data timestamp (UTC)")
 
 
+class DailyForecastResponse(BaseModel):
+    """Daily forecast response schema."""
+
+    date: str = Field(..., description="Forecast date in YYYY-MM-DD format")
+    temp_min: float = Field(..., description="Minimum temperature for the day")
+    temp_max: float = Field(..., description="Maximum temperature for the day")
+    condition: str = Field(..., description="Representative weather condition summary")
+    icon_code: str = Field(..., description="Weather icon code")
+
+
+class ForecastResponse(BaseModel):
+    """5-day weather forecast API response schema."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "city": "London",
+                "country": "GB",
+                "coordinates": {"latitude": 51.5074, "longitude": -0.1278},
+                "units": "metric",
+                "daily_forecasts": [
+                    {
+                        "date": "2026-08-19",
+                        "temp_min": 14.0,
+                        "temp_max": 22.5,
+                        "condition": "clear sky",
+                        "icon_code": "01d",
+                    },
+                    {
+                        "date": "2026-08-20",
+                        "temp_min": 15.0,
+                        "temp_max": 23.0,
+                        "condition": "few clouds",
+                        "icon_code": "02d",
+                    },
+                    {
+                        "date": "2026-08-21",
+                        "temp_min": 13.5,
+                        "temp_max": 20.0,
+                        "condition": "light rain",
+                        "icon_code": "10d",
+                    },
+                    {
+                        "date": "2026-08-22",
+                        "temp_min": 12.0,
+                        "temp_max": 19.5,
+                        "condition": "scattered clouds",
+                        "icon_code": "03d",
+                    },
+                    {
+                        "date": "2026-08-23",
+                        "temp_min": 14.5,
+                        "temp_max": 21.0,
+                        "condition": "clear sky",
+                        "icon_code": "01d",
+                    },
+                ],
+                "timestamp": "2026-08-19T12:00:00Z",
+            }
+        }
+    )
+
+    city: str = Field(..., description="City name")
+    country: str = Field(..., description="Country code (ISO 3166)")
+    coordinates: dict[str, float] = Field(
+        ..., description="Geographic coordinates (latitude, longitude)"
+    )
+    units: UnitSystem = Field(..., description="Temperature units (metric/imperial)")
+    daily_forecasts: list[DailyForecastResponse] = Field(
+        ..., description="Array of 5 consecutive daily forecasts"
+    )
+    timestamp: datetime = Field(..., description="Data timestamp (UTC)")
+
+
 class ErrorResponse(BaseModel):
     """Error response schema."""
 

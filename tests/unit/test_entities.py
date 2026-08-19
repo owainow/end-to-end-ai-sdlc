@@ -4,7 +4,13 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.domain.entities import WeatherData, WeatherRequest
+from src.domain.entities import (
+    DailyForecast,
+    ForecastData,
+    ForecastRequest,
+    WeatherData,
+    WeatherRequest,
+)
 from src.domain.value_objects import Coordinates, UnitSystem
 
 
@@ -59,16 +65,12 @@ class TestWeatherRequest:
 
     def test_empty_city_raises_error(self) -> None:
         """Test that empty city raises ValueError."""
-        with pytest.raises(
-            ValueError, match="Either city name or coordinates must be provided"
-        ):
+        with pytest.raises(ValueError, match="Either city name or coordinates must be provided"):
             WeatherRequest(city="")
 
     def test_whitespace_city_raises_error(self) -> None:
         """Test that whitespace-only city raises ValueError."""
-        with pytest.raises(
-            ValueError, match="Either city name or coordinates must be provided"
-        ):
+        with pytest.raises(ValueError, match="Either city name or coordinates must be provided"):
             WeatherRequest(city="   ")
 
     def test_long_city_raises_error(self) -> None:
@@ -96,9 +98,7 @@ class TestWeatherRequest:
 
     def test_empty_city_and_no_coordinates_raises_error(self) -> None:
         """Test that request without city or coordinates raises ValueError."""
-        with pytest.raises(
-            ValueError, match="Either city name or coordinates must be provided"
-        ):
+        with pytest.raises(ValueError, match="Either city name or coordinates must be provided"):
             WeatherRequest(city="", coordinates=None)
 
     def test_cache_key_with_coordinates(self) -> None:
@@ -115,9 +115,7 @@ class TestWeatherRequest:
     def test_coordinates_preferred_over_city(self) -> None:
         """Test that coordinates can be provided with or without city."""
         coords = Coordinates(latitude=51.5074, longitude=-0.1278)
-        request = WeatherRequest(
-            city="London", coordinates=coords, units=UnitSystem.METRIC
-        )
+        request = WeatherRequest(city="London", coordinates=coords, units=UnitSystem.METRIC)
         assert request.coordinates == coords
         # Cache key should use coordinates
         assert "coords:" in request.cache_key
@@ -175,3 +173,123 @@ class TestWeatherData:
     def test_location_display(self, weather_data: WeatherData) -> None:
         """Test location display."""
         assert weather_data.location_display == "London, GB"
+
+
+class TestForecastRequest:
+    """Tests for ForecastRequest entity."""
+
+    def test_valid_request(self) -> None:
+        """Test creating a valid forecast request."""
+        request = ForecastRequest(city="London")
+        assert request.city == "London"
+        assert request.units == UnitSystem.METRIC
+
+    def test_request_with_imperial_units(self) -> None:
+        """Test forecast request with imperial units."""
+        request = ForecastRequest(city="New York", units=UnitSystem.IMPERIAL)
+        assert request.units == UnitSystem.IMPERIAL
+
+    def test_empty_city_raises_invalid_city_name_error(self) -> None:
+        """Test that empty city raises InvalidCityNameError."""
+        from src.domain.exceptions import InvalidCityNameError
+
+        with pytest.raises(InvalidCityNameError, match="cannot be empty or whitespace"):
+            ForecastRequest(city="")
+
+    def test_whitespace_city_raises_invalid_city_name_error(self) -> None:
+        """Test that whitespace-only city raises InvalidCityNameError."""
+        from src.domain.exceptions import InvalidCityNameError
+
+        with pytest.raises(InvalidCityNameError, match="cannot be empty or whitespace"):
+            ForecastRequest(city="   ")
+
+    def test_long_city_raises_invalid_city_name_error(self) -> None:
+        """Test that city > 100 chars raises InvalidCityNameError."""
+        from src.domain.exceptions import InvalidCityNameError
+
+        with pytest.raises(InvalidCityNameError, match="cannot exceed 100 characters"):
+            ForecastRequest(city="a" * 101)
+
+    def test_cache_key_generation(self) -> None:
+        """Test forecast cache key generation is consistent."""
+        request1 = ForecastRequest(city="London", units=UnitSystem.METRIC)
+        request2 = ForecastRequest(city=" LONDON ", units=UnitSystem.METRIC)
+        request3 = ForecastRequest(city="London", units=UnitSystem.IMPERIAL)
+
+        assert request1.cache_key == "forecast:london:metric"
+        assert request1.cache_key == request2.cache_key
+        assert request1.cache_key != request3.cache_key
+        assert request3.cache_key == "forecast:london:imperial"
+
+
+class TestDailyForecast:
+    """Tests for DailyForecast value object."""
+
+    def test_valid_daily_forecast(self) -> None:
+        """Test creating a valid DailyForecast."""
+        df = DailyForecast(
+            date="2026-08-19",
+            temp_min=14.0,
+            temp_max=22.5,
+            condition="clear sky",
+            icon_code="01d",
+        )
+        assert df.date == "2026-08-19"
+        assert df.temp_min == 14.0
+        assert df.temp_max == 22.5
+        assert df.condition == "clear sky"
+        assert df.icon_code == "01d"
+
+
+class TestForecastData:
+    """Tests for ForecastData entity."""
+
+    def test_valid_forecast_data(
+        self, sample_coordinates: Coordinates, sample_daily_forecasts: list[DailyForecast]
+    ) -> None:
+        """Test creating valid ForecastData with 5 daily forecasts."""
+        data = ForecastData(
+            city_name="London",
+            country="GB",
+            coordinates=sample_coordinates,
+            units=UnitSystem.METRIC,
+            daily_forecasts=sample_daily_forecasts,
+            timestamp=datetime.now(UTC),
+        )
+        assert data.city_name == "London"
+        assert len(data.daily_forecasts) == 5
+
+    def test_less_than_5_days_raises_value_error(
+        self, sample_coordinates: Coordinates, sample_daily_forecasts: list[DailyForecast]
+    ) -> None:
+        """Test that fewer than 5 daily forecasts raises ValueError."""
+        with pytest.raises(ValueError, match="ForecastData must contain exactly 5 daily forecasts"):
+            ForecastData(
+                city_name="London",
+                country="GB",
+                coordinates=sample_coordinates,
+                units=UnitSystem.METRIC,
+                daily_forecasts=sample_daily_forecasts[:4],
+                timestamp=datetime.now(UTC),
+            )
+
+    def test_more_than_5_days_raises_value_error(
+        self, sample_coordinates: Coordinates, sample_daily_forecasts: list[DailyForecast]
+    ) -> None:
+        """Test that more than 5 daily forecasts raises ValueError."""
+        extra_day = DailyForecast(
+            date="2026-08-24",
+            temp_min=15.0,
+            temp_max=24.0,
+            condition="sunny",
+            icon_code="01d",
+        )
+        with pytest.raises(ValueError, match="ForecastData must contain exactly 5 daily forecasts"):
+            ForecastData(
+                city_name="London",
+                country="GB",
+                coordinates=sample_coordinates,
+                units=UnitSystem.METRIC,
+                daily_forecasts=[*sample_daily_forecasts, extra_day],
+                timestamp=datetime.now(UTC),
+            )

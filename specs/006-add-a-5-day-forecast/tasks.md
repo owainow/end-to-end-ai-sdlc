@@ -23,8 +23,8 @@
 
 **Purpose**: Test harness preparation, shared fixtures, and contract validation setup
 
-- [ ] T001 Create shared forecast test fixtures in `tests/conftest.py` with mock raw 40-interval OpenWeatherMap 5-day forecast payloads (spanning 5 and 6 distinct local calendar days, standard and fractional UTC offsets such as UTC+5:30, and error responses).
-- [ ] T002 [P] Create contract integration test in `tests/integration/test_forecast_api.py` validating route schema against `specs/006-add-a-5-day-forecast/contracts/openapi.yaml`.
+- [x] T001 Create shared forecast test fixtures in `tests/conftest.py` with mock raw 40-interval OpenWeatherMap 5-day forecast payloads (spanning 5 and 6 distinct local calendar days, standard and fractional UTC offsets such as UTC+5:30, and error responses).
+- [x] T002 [P] Create contract integration test in `tests/integration/test_forecast_api.py` validating route schema against `specs/006-add-a-5-day-forecast/contracts/openapi.yaml`.
 
 ---
 
@@ -34,19 +34,19 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Define domain entities and value objects in `src/domain/entities.py`:
+- [x] T003 Define domain entities and value objects in `src/domain/entities.py`:
   - `DailyForecast`: `date: str` (`YYYY-MM-DD`), `temp_min: float`, `temp_max: float`, `condition: str`, `icon_code: str`.
   - `ForecastData`: `city_name: str`, `country: str`, `coordinates: Coordinates`, `units: UnitSystem`, `daily_forecasts: list[DailyForecast]`, `timestamp: datetime` with invariant validation ensuring `len(daily_forecasts) == 5`.
   - `ForecastRequest`: `city: str`, `units: UnitSystem` (default: `UnitSystem.METRIC`) with validation rejecting empty/whitespace string or >100 characters by raising `InvalidCityNameError`, and property `cache_key -> str` (`forecast:{city_lower}:{units}`).
   - `RawForecastInterval`: `dt: datetime`, `temp: float`, `condition: str`, `icon_code: str`.
   - `RawForecastData`: `city_name: str`, `country: str`, `coordinates: Coordinates`, `timezone_offset: int`, `intervals: list[RawForecastInterval]`.
-- [ ] T004 [P] Update application port interfaces in `src/application/interfaces.py` to add `WeatherProviderPort.get_forecast_raw(city: str, units: UnitSystem) -> RawForecastData` and update `CachePort` methods (`get(key: str) -> WeatherData | ForecastData | None`, `set(key: str, value: WeatherData | ForecastData, ttl_seconds: int) -> None`).
-- [ ] T005 [P] Update `InMemoryCache` in `src/infrastructure/cache.py` to store and retrieve `WeatherData | ForecastData | None` in thread-safe memory with TTL.
-- [ ] T006 [P] Update `GetWeatherUseCase` in `src/application/use_cases/get_weather.py` to include strict type narrowing (`isinstance(cached_data, WeatherData)`) for polymorphic cache retrieval, ensuring 100% strict Mypy type-check compliance.
-- [ ] T007 [P] Define presentation schemas in `src/presentation/schemas.py`:
+- [x] T004 [P] Update application port interfaces in `src/application/interfaces.py` to add `WeatherProviderPort.get_forecast_raw(city: str, units: UnitSystem) -> RawForecastData` and update `CachePort` methods (`get(key: str) -> WeatherData | ForecastData | None`, `set(key: str, value: WeatherData | ForecastData, ttl_seconds: int) -> None`).
+- [x] T005 [P] Update `InMemoryCache` in `src/infrastructure/cache.py` to store and retrieve `WeatherData | ForecastData | None` in thread-safe memory with TTL.
+- [x] T006 [P] Update `GetWeatherUseCase` in `src/application/use_cases/get_weather.py` to include strict type narrowing (`isinstance(cached_data, WeatherData)`) for polymorphic cache retrieval, ensuring 100% strict Mypy type-check compliance.
+- [x] T007 [P] Define presentation schemas in `src/presentation/schemas.py`:
   - `DailyForecastResponse`: `date: str`, `temp_min: float`, `temp_max: float`, `condition: str`, `icon_code: str`.
   - `ForecastResponse`: `city: str`, `country: str`, `coordinates: dict[str, float]`, `units: UnitSystem`, `daily_forecasts: list[DailyForecastResponse]`, `timestamp: datetime`.
-- [ ] T008 [P] Ensure exception handling in `src/presentation/exception_handlers.py` and `src/main.py` maps domain exceptions to structured JSON error envelopes (`{"error": {"code": str, "message": str, "retry_after": int | null}}`): `InvalidCityNameError` -> 400 (`"INVALID_CITY_NAME"`), `CityNotFoundError` -> 404 (`"CITY_NOT_FOUND"`), `RateLimitExceededError` -> 429 (`"RATE_LIMIT_EXCEEDED"`), and `WeatherProviderError` -> 502 (`"PROVIDER_ERROR"` with 30s retry-after).
+- [x] T008 [P] Ensure exception handling in `src/presentation/exception_handlers.py` and `src/main.py` maps domain exceptions to structured JSON error envelopes (`{"error": {"code": str, "message": str, "retry_after": int | null}}`): `InvalidCityNameError` -> 400 (`"INVALID_CITY_NAME"`), `CityNotFoundError` -> 404 (`"CITY_NOT_FOUND"`), `RateLimitExceededError` -> 429 (`"RATE_LIMIT_EXCEEDED"`), and `WeatherProviderError` -> 502 (`"PROVIDER_ERROR"` with 30s retry-after).
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -62,22 +62,22 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T009 [P] [US1] Create unit tests for `ForecastRequest`, `DailyForecast`, and `ForecastData` entity validation in `tests/unit/test_entities.py` (validate empty/whitespace city raising `InvalidCityNameError`, city >100 chars, `len(daily_forecasts) != 5` invariant check).
-- [ ] T010 [P] [US1] Create unit tests for `GetForecastUseCase` in `tests/unit/test_forecast_use_case.py` verifying:
+- [x] T009 [P] [US1] Create unit tests for `ForecastRequest`, `DailyForecast`, and `ForecastData` entity validation in `tests/unit/test_entities.py` (validate empty/whitespace city raising `InvalidCityNameError`, city >100 chars, `len(daily_forecasts) != 5` invariant check).
+- [x] T010 [P] [US1] Create unit tests for `GetForecastUseCase` in `tests/unit/test_forecast_use_case.py` verifying:
   - Local calendar date grouping using UTC timezone offset (`timezone_offset`).
   - Chronological sorting and selection of the first 5 local calendar days (`sorted_dates[:5]`).
   - Daily extreme temperature calculation (`temp_min = min(temps)`, `temp_max = max(temps)`).
   - Midday condition selection minimizing second-precision distance from 12:00:00 local time (`abs((local_dt.hour * 3600 + local_dt.minute * 60 + local_dt.second) - 43200)`).
   - Deterministic earlier-interval tie-breaking when two intervals are equidistant from midday (including fractional UTC offsets like UTC+5:30).
   - `WeatherProviderError` raised when the provider returns fewer than 5 local calendar days.
-- [ ] T011 [P] [US1] Create integration tests for `GET /api/v1/weather/{city}/forecast` in `tests/integration/test_forecast_api.py` (200 success with 5 days, 404 city not found, 400 invalid city name, 502 provider error).
+- [x] T011 [P] [US1] Create integration tests for `GET /api/v1/weather/{city}/forecast` in `tests/integration/test_forecast_api.py` (200 success with 5 days, 404 city not found, 400 invalid city name, 502 provider error).
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement `OpenWeatherMapClient.get_forecast_raw(city: str, units: UnitSystem) -> RawForecastData` in `src/infrastructure/weather_provider.py` to query OpenWeatherMap `/data/2.5/forecast`, mapping HTTP errors to domain exceptions (`CityNotFoundError`, `RateLimitExceededError`, `WeatherProviderError`) and parsing intervals without business aggregation.
-- [ ] T013 [US1] Implement `GetForecastUseCase` in `src/application/use_cases/get_forecast.py` (and re-export in `src/application/use_cases/__init__.py`) executing timezone conversion, grouping by local date, validation of `>= 5` days (raising `WeatherProviderError` if `< 5`), slicing `[:5]`, calculating daily `temp_min`/`temp_max`, and selecting midday condition/icon using second-precision distance with deterministic earlier-interval tie-breaking.
-- [ ] T014 [US1] Create `get_forecast_use_case` dependency provider in `src/presentation/dependencies.py`.
-- [ ] T015 [US1] Implement route `GET /api/v1/weather/{city}/forecast` in `src/presentation/routers/weather.py` using `city: str = Path(..., min_length=1, max_length=100)`, calling `GetForecastUseCase.execute(ForecastRequest(city=city, units=UnitSystem.METRIC))`, and mapping `ForecastData` to `ForecastResponse`.
+- [x] T012 [US1] Implement `OpenWeatherMapClient.get_forecast_raw(city: str, units: UnitSystem) -> RawForecastData` in `src/infrastructure/weather_provider.py` to query OpenWeatherMap `/data/2.5/forecast`, mapping HTTP errors to domain exceptions (`CityNotFoundError`, `RateLimitExceededError`, `WeatherProviderError`) and parsing intervals without business aggregation.
+- [x] T013 [US1] Implement `GetForecastUseCase` in `src/application/use_cases/get_forecast.py` (and re-export in `src/application/use_cases/__init__.py`) executing timezone conversion, grouping by local date, validation of `>= 5` days (raising `WeatherProviderError` if `< 5`), slicing `[:5]`, calculating daily `temp_min`/`temp_max`, and selecting midday condition/icon using second-precision distance with deterministic earlier-interval tie-breaking.
+- [x] T014 [US1] Create `get_forecast_use_case` dependency provider in `src/presentation/dependencies.py`.
+- [x] T015 [US1] Implement route `GET /api/v1/weather/{city}/forecast` in `src/presentation/routers/weather.py` using `city: str = Path(..., min_length=1, max_length=100)`, calling `GetForecastUseCase.execute(ForecastRequest(city=city, units=UnitSystem.METRIC))`, and mapping `ForecastData` to `ForecastResponse`.
 
 **Checkpoint**: At this point, User Story 1 is fully functional and testable independently as an MVP.
 
@@ -91,8 +91,8 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T016 [P] [US2] Create unit tests in `tests/unit/test_forecast_use_case.py` verifying `GetForecastUseCase` correctly passes `UnitSystem.METRIC` and `UnitSystem.IMPERIAL` through `ForecastRequest` to the provider and domain entity.
-- [ ] T017 [P] [US2] Create integration tests in `tests/integration/test_forecast_api.py` for query parameter handling:
+- [x] T016 [P] [US2] Create unit tests in `tests/unit/test_forecast_use_case.py` verifying `GetForecastUseCase` correctly passes `UnitSystem.METRIC` and `UnitSystem.IMPERIAL` through `ForecastRequest` to the provider and domain entity.
+- [x] T017 [P] [US2] Create integration tests in `tests/integration/test_forecast_api.py` for query parameter handling:
   - `?units=metric` returns Celsius values and `units: "metric"`.
   - `?units=imperial` returns Fahrenheit values and `units: "imperial"`.
   - Omitting `units` defaults to `units: "metric"`.
@@ -100,7 +100,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Update `GET /api/v1/weather/{city}/forecast` route in `src/presentation/routers/weather.py` to accept `units: UnitSystem = Query(default=UnitSystem.METRIC)` and pass it into `ForecastRequest(city=city, units=units)` for use case execution.
+- [x] T018 [US2] Update `GET /api/v1/weather/{city}/forecast` route in `src/presentation/routers/weather.py` to accept `units: UnitSystem = Query(default=UnitSystem.METRIC)` and pass it into `ForecastRequest(city=city, units=units)` for use case execution.
 
 **Checkpoint**: At this point, User Stories 1 AND 2 work seamlessly together.
 
@@ -114,13 +114,13 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T019 [P] [US3] Create unit tests in `tests/unit/test_forecast_use_case.py` verifying cache hit returns cached `ForecastData` immediately with debug logging, and cache miss fetches from provider, caches result with 900s TTL, and logs info.
-- [ ] T020 [P] [US3] Create integration tests in `tests/integration/test_forecast_api.py` verifying sequential identical requests hit cache, and provider 429 rate limit returns HTTP 429 with `RATE_LIMIT_EXCEEDED` and `Retry-After` header.
+- [x] T019 [P] [US3] Create unit tests in `tests/unit/test_forecast_use_case.py` verifying cache hit returns cached `ForecastData` immediately with debug logging, and cache miss fetches from provider, caches result with 900s TTL, and logs info.
+- [x] T020 [P] [US3] Create integration tests in `tests/integration/test_forecast_api.py` verifying sequential identical requests hit cache, and provider 429 rate limit returns HTTP 429 with `RATE_LIMIT_EXCEEDED` and `Retry-After` header.
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Update `GetForecastUseCase` in `src/application/use_cases/get_forecast.py` to accept `cache: CachePort`, `logger: LoggerPort`, and `cache_ttl_seconds: int = 900` in `__init__`, checking `cache.get(request.cache_key)` on invocation, storing `cache.set(request.cache_key, forecast_data, self._cache_ttl)` on miss, and emitting structured logs.
-- [ ] T022 [US3] Update `get_forecast_use_case` dependency provider in `src/presentation/dependencies.py` to inject `cache=get_cache()`, `logger=get_logger()`, and `cache_ttl_seconds=settings.cache_ttl_seconds`.
+- [x] T021 [US3] Update `GetForecastUseCase` in `src/application/use_cases/get_forecast.py` to accept `cache: CachePort`, `logger: LoggerPort`, and `cache_ttl_seconds: int = 900` in `__init__`, checking `cache.get(request.cache_key)` on invocation, storing `cache.set(request.cache_key, forecast_data, self._cache_ttl)` on miss, and emitting structured logs.
+- [x] T022 [US3] Update `get_forecast_use_case` dependency provider in `src/presentation/dependencies.py` to inject `cache=get_cache()`, `logger=get_logger()`, and `cache_ttl_seconds=settings.cache_ttl_seconds`.
 
 **Checkpoint**: All user stories (US1, US2, US3) are independently functional, cached, and fully tested.
 
@@ -130,11 +130,11 @@
 
 **Purpose**: API documentation synchronization, static analysis, linting, and test coverage verification
 
-- [ ] T023 [P] Update OpenAPI route metadata and descriptions in `src/presentation/routers/weather.py` and `src/main.py` matching `/specs/006-add-a-5-day-forecast/contracts/openapi.yaml`.
-- [ ] T024 [P] Validate `specs/006-add-a-5-day-forecast/quickstart.md` commands and sample responses against the running application.
-- [ ] T025 Run full Pytest test suite with coverage enforcement (`pytest --cov=src --cov-fail-under=80 tests/`) to ensure >= 80% coverage on business logic.
-- [ ] T026 [P] Run Ruff linter and formatter check (`ruff check src tests` and `ruff format --check src tests`) to ensure compliance with 100-character line length limit.
-- [ ] T027 [P] Run Mypy strict type checking (`mypy src tests`) to ensure zero type errors under `strict = true`.
+- [x] T023 [P] Update OpenAPI route metadata and descriptions in `src/presentation/routers/weather.py` and `src/main.py` matching `/specs/006-add-a-5-day-forecast/contracts/openapi.yaml`.
+- [x] T024 [P] Validate `specs/006-add-a-5-day-forecast/quickstart.md` commands and sample responses against the running application.
+- [x] T025 Run full Pytest test suite with coverage enforcement (`pytest --cov=src --cov-fail-under=80 tests/`) to ensure >= 80% coverage on business logic.
+- [x] T026 [P] Run Ruff linter and formatter check (`ruff check src tests` and `ruff format --check src tests`) to ensure compliance with 100-character line length limit.
+- [x] T027 [P] Run Mypy strict type checking (`mypy src tests`) to ensure zero type errors under `strict = true`.
 
 ---
 
