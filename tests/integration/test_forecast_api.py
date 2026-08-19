@@ -242,3 +242,16 @@ class TestForecastEndpoint:
                 assert data["error"]["retry_after"] == 30
 
             app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_get_forecast_invalid_units(self) -> None:
+        """Test forecast request with invalid units parameter returns 422."""
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+
+            app = create_app()
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/weather/London/forecast?units=kelvin")
+
+                assert response.status_code == 422
