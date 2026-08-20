@@ -68,9 +68,7 @@ class TestWeatherEndpoint:
     """Tests for the weather endpoint."""
 
     @pytest.mark.asyncio
-    async def test_get_weather_success(
-        self, sample_weather_result: WeatherResult
-    ) -> None:
+    async def test_get_weather_success(self, sample_weather_result: WeatherResult) -> None:
         """Test successful weather retrieval."""
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=sample_weather_result)
@@ -83,9 +81,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.get("/api/v1/weather?city=London")
 
                 assert response.status_code == 200
@@ -98,9 +94,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_get_weather_with_units(
-        self, sample_weather_data: WeatherData
-    ) -> None:
+    async def test_get_weather_with_units(self, sample_weather_data: WeatherData) -> None:
         """Test weather retrieval with imperial units."""
         imperial_data = WeatherData(
             city_name="London",
@@ -131,12 +125,8 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
-                response = await client.get(
-                    "/api/v1/weather?city=London&units=imperial"
-                )
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/weather?city=London&units=imperial")
 
                 assert response.status_code == 200
                 data = response.json()
@@ -165,9 +155,7 @@ class TestWeatherEndpoint:
         from src.domain.exceptions import CityNotFoundError
 
         mock_use_case = MagicMock()
-        mock_use_case.execute = AsyncMock(
-            side_effect=CityNotFoundError("InvalidCity123")
-        )
+        mock_use_case.execute = AsyncMock(side_effect=CityNotFoundError("InvalidCity123"))
 
         with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
             from src.main import create_app
@@ -177,12 +165,8 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
-                response = await client.get(
-                    "/api/v1/weather?city=InvalidCity123"
-                )
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/weather?city=InvalidCity123")
 
                 assert response.status_code == 404
                 data = response.json()
@@ -208,9 +192,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.get("/api/v1/weather?city=London")
 
                 assert response.status_code == 429
@@ -222,9 +204,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_get_weather_with_coordinates(
-        self, sample_weather_result: WeatherResult
-    ) -> None:
+    async def test_get_weather_with_coordinates(self, sample_weather_result: WeatherResult) -> None:
         """Test weather retrieval with coordinates."""
         mock_use_case = MagicMock()
         mock_use_case.execute = AsyncMock(return_value=sample_weather_result)
@@ -237,12 +217,8 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
-                response = await client.get(
-                    "/api/v1/weather?lat=51.5074&lon=-0.1278&units=metric"
-                )
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/weather?lat=51.5074&lon=-0.1278&units=metric")
 
                 assert response.status_code == 200
                 data = response.json()
@@ -270,17 +246,13 @@ class TestWeatherEndpoint:
         assert "lat and lon must be provided together" in data["detail"]
 
     @pytest.mark.asyncio
-    async def test_get_weather_with_invalid_lat(
-        self, test_client: AsyncClient
-    ) -> None:
+    async def test_get_weather_with_invalid_lat(self, test_client: AsyncClient) -> None:
         """Test weather request with out-of-range lat returns 422."""
         response = await test_client.get("/api/v1/weather?lat=91.0&lon=0.0")
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_get_weather_with_invalid_lon(
-        self, test_client: AsyncClient
-    ) -> None:
+    async def test_get_weather_with_invalid_lon(self, test_client: AsyncClient) -> None:
         """Test weather request with out-of-range lon returns 422."""
         response = await test_client.get("/api/v1/weather?lat=0.0&lon=181.0")
         assert response.status_code == 422
@@ -301,12 +273,8 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
-                response = await client.get(
-                    "/api/v1/weather?city=Paris&lat=51.5074&lon=-0.1278"
-                )
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get("/api/v1/weather?city=Paris&lat=51.5074&lon=-0.1278")
 
                 assert response.status_code == 200
                 # Verify the use case was called with coordinates
@@ -318,22 +286,15 @@ class TestWeatherEndpoint:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_get_weather_no_city_no_coords(
-        self, test_client: AsyncClient
-    ) -> None:
+    async def test_get_weather_no_city_no_coords(self, test_client: AsyncClient) -> None:
         """Test weather request without city or coords returns 422."""
         response = await test_client.get("/api/v1/weather")
         assert response.status_code == 422
         data = response.json()
-        assert (
-            "Either city or coordinates" in data["detail"]
-            or "Field required" in str(data)
-        )
+        assert "Either city or coordinates" in data["detail"] or "Field required" in str(data)
 
     @pytest.mark.asyncio
-    async def test_get_weather_easter_egg_france(
-        self, sample_weather_data: WeatherData
-    ) -> None:
+    async def test_get_weather_easter_egg_france(self, sample_weather_data: WeatherData) -> None:
         """Test that weather queries resolving to France include easter_egg='zidane'."""
         french_data = WeatherData(
             city_name="Paris",
@@ -363,9 +324,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.get("/api/v1/weather?city=Paris")
 
                 assert response.status_code == 200
@@ -392,9 +351,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.get("/api/v1/weather?city=London")
 
                 assert response.status_code == 200
@@ -436,9 +393,7 @@ class TestWeatherEndpoint:
             app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport, base_url="http://test"
-            ) as client:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.get("/api/v1/weather?lat=0.0&lon=0.0")
 
                 assert response.status_code == 200

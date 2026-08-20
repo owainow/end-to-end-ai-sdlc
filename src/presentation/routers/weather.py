@@ -89,9 +89,7 @@ async def get_weather(
         )
 
     # Create request with coordinates or city
-    request = WeatherRequest(
-        city=city or "", units=units, coordinates=coordinates
-    )
+    request = WeatherRequest(city=city or "", units=units, coordinates=coordinates)
     result = await use_case.execute(request)
     weather_data = result.weather_data
 

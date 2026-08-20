@@ -1,6 +1,5 @@
 """Unit tests for domain exceptions."""
 
-
 from src.domain.exceptions import (
     CacheError,
     CityNotFoundError,
