@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.domain.value_objects import Coordinates, UnitSystem
+from src.domain.value_objects import Coordinates, UnitSystem, WeatherCondition
 
 
 @dataclass(frozen=True)
@@ -81,6 +81,14 @@ class DailyForecast:
     temp_max: float
     condition: str
     icon_code: str
+    condition_code: WeatherCondition = WeatherCondition.UNKNOWN
+
+    def __post_init__(self) -> None:
+        """Derive condition_code if not explicitly set."""
+        if self.condition_code == WeatherCondition.UNKNOWN and self.condition:
+            object.__setattr__(
+                self, "condition_code", WeatherCondition.from_string(self.condition)
+            )
 
 
 @dataclass(frozen=True)
@@ -134,6 +142,14 @@ class RawForecastInterval:
     temp: float
     condition: str
     icon_code: str
+    condition_code: WeatherCondition = WeatherCondition.UNKNOWN
+
+    def __post_init__(self) -> None:
+        """Derive condition_code if not explicitly set."""
+        if self.condition_code == WeatherCondition.UNKNOWN and self.condition:
+            object.__setattr__(
+                self, "condition_code", WeatherCondition.from_string(self.condition)
+            )
 
 
 @dataclass(frozen=True)

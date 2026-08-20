@@ -17,7 +17,7 @@ from src.domain.exceptions import (
     RateLimitExceededError,
     WeatherProviderError,
 )
-from src.domain.value_objects import Coordinates, UnitSystem
+from src.domain.value_objects import Coordinates, UnitSystem, WeatherCondition
 
 
 @pytest.fixture
@@ -240,6 +240,7 @@ class TestGetForecastUseCase:
         assert day1.temp_max == 24.0
         # Earlier interval won tie-break
         assert day1.condition == "morning sun"
+        assert day1.condition_code == WeatherCondition.CLEAR
         assert day1.icon_code == "01d"
 
     @pytest.mark.asyncio

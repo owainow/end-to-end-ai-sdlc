@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.domain.value_objects import UnitSystem
+from src.domain.value_objects import UnitSystem, WeatherCondition
 
 
 class WeatherResponse(BaseModel):
@@ -54,6 +54,10 @@ class DailyForecastResponse(BaseModel):
     temp_min: float = Field(..., description="Minimum temperature for the day")
     temp_max: float = Field(..., description="Maximum temperature for the day")
     condition: str = Field(..., description="Representative weather condition summary")
+    condition_code: WeatherCondition = Field(
+        default=WeatherCondition.UNKNOWN,
+        description="Machine-readable weather condition enum",
+    )
     icon_code: str = Field(..., description="Weather icon code")
 
 
@@ -73,6 +77,7 @@ class ForecastResponse(BaseModel):
                         "temp_min": 14.0,
                         "temp_max": 22.5,
                         "condition": "clear sky",
+                        "condition_code": "clear",
                         "icon_code": "01d",
                     },
                     {
@@ -80,6 +85,7 @@ class ForecastResponse(BaseModel):
                         "temp_min": 15.0,
                         "temp_max": 23.0,
                         "condition": "few clouds",
+                        "condition_code": "clouds",
                         "icon_code": "02d",
                     },
                     {
@@ -87,6 +93,7 @@ class ForecastResponse(BaseModel):
                         "temp_min": 13.5,
                         "temp_max": 20.0,
                         "condition": "light rain",
+                        "condition_code": "rain",
                         "icon_code": "10d",
                     },
                     {
@@ -94,6 +101,7 @@ class ForecastResponse(BaseModel):
                         "temp_min": 12.0,
                         "temp_max": 19.5,
                         "condition": "scattered clouds",
+                        "condition_code": "clouds",
                         "icon_code": "03d",
                     },
                     {
@@ -101,6 +109,7 @@ class ForecastResponse(BaseModel):
                         "temp_min": 14.5,
                         "temp_max": 21.0,
                         "condition": "clear sky",
+                        "condition_code": "clear",
                         "icon_code": "01d",
                     },
                 ],

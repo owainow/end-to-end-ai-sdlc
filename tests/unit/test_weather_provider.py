@@ -12,7 +12,7 @@ from src.domain.exceptions import (
     RateLimitExceededError,
     WeatherProviderError,
 )
-from src.domain.value_objects import UnitSystem
+from src.domain.value_objects import UnitSystem, WeatherCondition
 from src.infrastructure.weather_provider import OpenWeatherMapClient
 
 
@@ -60,6 +60,10 @@ class TestOpenWeatherMapClientForecast:
             assert result.timezone_offset == 0
             assert len(result.intervals) == 40
             assert result.intervals[0].condition in ["scattered clouds", "clear sky"]
+            assert result.intervals[0].condition_code in [
+                WeatherCondition.CLOUDS,
+                WeatherCondition.CLEAR,
+            ]
 
     @pytest.mark.asyncio
     async def test_get_forecast_raw_city_not_found(self, client: OpenWeatherMapClient) -> None:

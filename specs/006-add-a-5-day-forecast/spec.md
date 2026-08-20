@@ -80,10 +80,11 @@ As an API consumer, I want repeated forecast requests for the same city and unit
   - `temp_max`: The highest temperature across all 3-hour intervals on that local calendar date.
   - `temp_min`: The lowest temperature across all 3-hour intervals on that local calendar date.
   - `condition`: The weather condition summary string from the 3-hour interval on that date closest to 12:00 local time. In case of an equidistant tie (e.g. 09:00 vs 15:00), the earlier interval (09:00) MUST be selected.
+  - `condition_code`: The machine-readable `WeatherCondition` enum value corresponding to the weather condition of the selected interval (e.g., `clear`, `clouds`, `rain`).
   - `icon_code`: The weather icon code from the same interval selected for `condition`.
   - `date`: The local calendar date string formatted as `YYYY-MM-DD`.
 - **FR-006**: The system MUST return city metadata in the response, including `city` (city name), `country` (ISO country code), `coordinates` (`latitude`, `longitude`), `units` (`metric` | `imperial`), and `timestamp` (UTC ISO 8601).
-- **FR-007**: The system MUST format the response properties using `snake_case` naming consistent with existing weather endpoints (`city`, `country`, `coordinates`, `daily_forecasts`, `temp_min`, `temp_max`, `condition`, `icon_code`, `units`, `timestamp`).
+- **FR-007**: The system MUST format the response properties using `snake_case` naming consistent with existing weather endpoints (`city`, `country`, `coordinates`, `daily_forecasts`, `temp_min`, `temp_max`, `condition`, `condition_code`, `icon_code`, `units`, `timestamp`).
 - **FR-008**: The system MUST cache forecast responses in the in-memory cache for 900 seconds (15 minutes) using a normalized cache key format (`forecast:{city_name_lower}:{units}`).
 - **FR-009**: The system MUST validate that city names are non-empty, non-whitespace, and do not exceed 100 characters, raising `InvalidCityNameError` (HTTP 400 Bad Request with code `"INVALID_CITY_NAME"`) if validation fails.
 - **FR-010**: The system MUST return HTTP 404 Not Found with code `"CITY_NOT_FOUND"` when the requested city is not found by the weather provider.
@@ -94,12 +95,13 @@ As an API consumer, I want repeated forecast requests for the same city and unit
 
 ### Key Entities *(include if feature involves data)*
 
+- **WeatherCondition**: Domain enum of machine-readable condition identifiers (`clear`, `clouds`, `rain`, `drizzle`, `thunderstorm`, `snow`, `mist`, `smoke`, `haze`, `dust`, `fog`, `sand`, `ash`, `squall`, `tornado`, `unknown`).
 - **ForecastRequest**: Request entity for 5-day forecast queries.
   - Attributes: `city: str` (1-100 chars, stripped), `units: UnitSystem` (default: `UnitSystem.METRIC`).
   - Validation: Non-empty string, length <= 100 characters; raises `InvalidCityNameError` upon validation failure.
   - Methods: `cache_key -> str` (`forecast:{city}:{units}`).
 - **DailyForecast**: Value object representing a single day's aggregated forecast.
-  - Attributes: `date: str` (ISO 8601 date `YYYY-MM-DD`), `temp_min: float`, `temp_max: float`, `condition: str`, `icon_code: str`.
+  - Attributes: `date: str` (ISO 8601 date `YYYY-MM-DD`), `temp_min: float`, `temp_max: float`, `condition: str`, `condition_code: WeatherCondition`, `icon_code: str`.
 - **ForecastData**: Domain entity representing the complete 5-day weather forecast.
   - Attributes: `city_name: str`, `country: str`, `coordinates: Coordinates` (`latitude: float`, `longitude: float`), `units: UnitSystem`, `daily_forecasts: list[DailyForecast]` (length exactly 5), `timestamp: datetime`.
 - **ForecastResponse**: Presentation schema defining the JSON response payload.

@@ -8,10 +8,11 @@ from src.domain.entities import (
     DailyForecast,
     ForecastData,
     ForecastRequest,
+    RawForecastInterval,
     WeatherData,
     WeatherRequest,
 )
-from src.domain.value_objects import Coordinates, UnitSystem
+from src.domain.value_objects import Coordinates, UnitSystem, WeatherCondition
 
 
 class TestCoordinates:
@@ -222,11 +223,46 @@ class TestForecastRequest:
         assert request3.cache_key == "forecast:london:imperial"
 
 
+class TestWeatherCondition:
+    """Tests for WeatherCondition enum and helpers."""
+
+    def test_weather_condition_enum_values(self) -> None:
+        """Test expected enum values exist."""
+        assert WeatherCondition.CLEAR == "clear"
+        assert WeatherCondition.CLOUDS == "clouds"
+        assert WeatherCondition.RAIN == "rain"
+        assert WeatherCondition.DRIZZLE == "drizzle"
+        assert WeatherCondition.THUNDERSTORM == "thunderstorm"
+        assert WeatherCondition.SNOW == "snow"
+        assert WeatherCondition.MIST == "mist"
+        assert WeatherCondition.UNKNOWN == "unknown"
+
+    def test_from_string_exact_and_case_insensitive(self) -> None:
+        """Test from_string handles exact matches with whitespace and case variations."""
+        assert WeatherCondition.from_string("clear") == WeatherCondition.CLEAR
+        assert WeatherCondition.from_string("Clear") == WeatherCondition.CLEAR
+        assert WeatherCondition.from_string("  CLOUDS  ") == WeatherCondition.CLOUDS
+        assert WeatherCondition.from_string("Rain") == WeatherCondition.RAIN
+
+    def test_from_string_prose_matching(self) -> None:
+        """Test from_string matches keyword in prose condition descriptions."""
+        assert WeatherCondition.from_string("scattered clouds") == WeatherCondition.CLOUDS
+        assert WeatherCondition.from_string("light rain") == WeatherCondition.RAIN
+        assert WeatherCondition.from_string("heavy thunderstorm") == WeatherCondition.THUNDERSTORM
+        assert WeatherCondition.from_string("clear sky") == WeatherCondition.CLEAR
+
+    def test_from_string_unknown_fallback(self) -> None:
+        """Test from_string falls back to UNKNOWN for unrecognizable or empty values."""
+        assert WeatherCondition.from_string("unheard of weather") == WeatherCondition.UNKNOWN
+        assert WeatherCondition.from_string("") == WeatherCondition.UNKNOWN
+        assert WeatherCondition.from_string(None) == WeatherCondition.UNKNOWN
+
+
 class TestDailyForecast:
     """Tests for DailyForecast value object."""
 
     def test_valid_daily_forecast(self) -> None:
-        """Test creating a valid DailyForecast."""
+        """Test creating a valid DailyForecast with auto-derived condition_code."""
         df = DailyForecast(
             date="2026-08-19",
             temp_min=14.0,
@@ -238,7 +274,45 @@ class TestDailyForecast:
         assert df.temp_min == 14.0
         assert df.temp_max == 22.5
         assert df.condition == "clear sky"
+        assert df.condition_code == WeatherCondition.CLEAR
         assert df.icon_code == "01d"
+
+    def test_daily_forecast_explicit_condition_code(self) -> None:
+        """Test creating DailyForecast with explicit condition_code."""
+        df = DailyForecast(
+            date="2026-08-19",
+            temp_min=14.0,
+            temp_max=22.5,
+            condition="light drizzle",
+            icon_code="09d",
+            condition_code=WeatherCondition.DRIZZLE,
+        )
+        assert df.condition_code == WeatherCondition.DRIZZLE
+
+
+class TestRawForecastInterval:
+    """Tests for RawForecastInterval."""
+
+    def test_raw_forecast_interval_auto_derives_condition_code(self) -> None:
+        """Test RawForecastInterval auto-derives condition_code from condition."""
+        interval = RawForecastInterval(
+            dt=datetime.now(UTC),
+            temp=20.0,
+            condition="scattered clouds",
+            icon_code="03d",
+        )
+        assert interval.condition_code == WeatherCondition.CLOUDS
+
+    def test_raw_forecast_interval_explicit_condition_code(self) -> None:
+        """Test RawForecastInterval with explicitly passed condition_code."""
+        interval = RawForecastInterval(
+            dt=datetime.now(UTC),
+            temp=20.0,
+            condition="scattered clouds",
+            icon_code="03d",
+            condition_code=WeatherCondition.CLOUDS,
+        )
+        assert interval.condition_code == WeatherCondition.CLOUDS
 
 
 class TestForecastData:

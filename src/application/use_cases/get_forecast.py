@@ -112,6 +112,7 @@ class GetForecastUseCase:
                     temp_max=temp_max,
                     condition=best_entry[1].condition,
                     icon_code=best_entry[1].icon_code,
+                    condition_code=best_entry[1].condition_code,
                 )
             )
 

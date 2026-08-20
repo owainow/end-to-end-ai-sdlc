@@ -12,7 +12,7 @@ from src.domain.entities import (
     ForecastRequest,
     WeatherData,
 )
-from src.domain.value_objects import Coordinates, UnitSystem
+from src.domain.value_objects import Coordinates, UnitSystem, WeatherCondition
 
 
 @pytest.fixture
@@ -51,6 +51,7 @@ def sample_daily_forecasts() -> list[DailyForecast]:
             temp_max=22.5,
             condition="clear sky",
             icon_code="01d",
+            condition_code=WeatherCondition.CLEAR,
         ),
         DailyForecast(
             date="2026-08-20",
@@ -58,6 +59,7 @@ def sample_daily_forecasts() -> list[DailyForecast]:
             temp_max=23.0,
             condition="few clouds",
             icon_code="02d",
+            condition_code=WeatherCondition.CLOUDS,
         ),
         DailyForecast(
             date="2026-08-21",
@@ -65,6 +67,7 @@ def sample_daily_forecasts() -> list[DailyForecast]:
             temp_max=20.0,
             condition="light rain",
             icon_code="10d",
+            condition_code=WeatherCondition.RAIN,
         ),
         DailyForecast(
             date="2026-08-22",
@@ -72,6 +75,7 @@ def sample_daily_forecasts() -> list[DailyForecast]:
             temp_max=19.5,
             condition="scattered clouds",
             icon_code="03d",
+            condition_code=WeatherCondition.CLOUDS,
         ),
         DailyForecast(
             date="2026-08-23",
@@ -79,6 +83,7 @@ def sample_daily_forecasts() -> list[DailyForecast]:
             temp_max=21.0,
             condition="clear sky",
             icon_code="01d",
+            condition_code=WeatherCondition.CLEAR,
         ),
     ]
 

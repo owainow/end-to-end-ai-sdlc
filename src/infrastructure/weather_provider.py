@@ -17,7 +17,7 @@ from src.domain.exceptions import (
     RateLimitExceededError,
     WeatherProviderError,
 )
-from src.domain.value_objects import Coordinates, UnitSystem
+from src.domain.value_objects import Coordinates, UnitSystem, WeatherCondition
 
 
 class OpenWeatherMapClient(WeatherProviderPort):
@@ -199,13 +199,16 @@ class OpenWeatherMapClient(WeatherProviderPort):
             temp = float(main.get("temp", 0.0))
             weather = item.get("weather", [{}])[0]
             condition = str(weather.get("description", ""))
+            main_cond = str(weather.get("main", ""))
             icon_code = str(weather.get("icon", ""))
+            condition_code = WeatherCondition.from_string(main_cond or condition)
             intervals.append(
                 RawForecastInterval(
                     dt=dt,
                     temp=temp,
                     condition=condition,
                     icon_code=icon_code,
+                    condition_code=condition_code,
                 )
             )
 

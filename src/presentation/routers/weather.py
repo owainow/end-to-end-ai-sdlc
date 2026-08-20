@@ -175,6 +175,7 @@ async def get_forecast(
                 temp_min=df.temp_min,
                 temp_max=df.temp_max,
                 condition=df.condition,
+                condition_code=df.condition_code,
                 icon_code=df.icon_code,
             )
             for df in forecast_data.daily_forecasts
