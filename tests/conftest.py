@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from src.application.dto import WeatherResult
 from src.domain.entities import WeatherData
 from src.domain.value_objects import Coordinates, UnitSystem
 
@@ -30,9 +31,16 @@ def sample_weather_data(sample_coordinates: Coordinates) -> WeatherData:
         pressure=1013,
         visibility=10000,
         description="scattered clouds",
+        icon_code="04d",
         units=UnitSystem.METRIC,
         timestamp=datetime.now(UTC),
     )
+
+
+@pytest.fixture
+def sample_weather_result(sample_weather_data: WeatherData) -> WeatherResult:
+    """Sample weather result DTO for testing."""
+    return WeatherResult(weather_data=sample_weather_data, easter_egg=None)
 
 
 @pytest.fixture

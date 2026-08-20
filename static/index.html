@@ -326,6 +326,19 @@
             <div id="weather-card" class="hidden fade-in">
                 <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
                     
+                    <!-- Easter Egg Container -->
+                    <div id="easter-egg-container" class="hidden mb-6 text-center">
+                        <img 
+                            id="easter-egg-img" 
+                            src="" 
+                            alt="Zizou approves" 
+                            class="mx-auto rounded-xl shadow-md max-h-48 object-cover"
+                        >
+                        <p id="easter-egg-fallback" class="hidden text-lg font-semibold text-blue-600 py-2">
+                            🇫🇷 Zizou approves
+                        </p>
+                    </div>
+
                     <!-- Location Header -->
                     <div class="text-center mb-6">
                         <div id="easter-egg" class="hidden mb-4 text-center">
@@ -664,6 +677,11 @@
             windSpeed: document.getElementById('wind-speed'),
             description: document.getElementById('description'),
             weatherIcon: document.getElementById('weather-icon'),
+
+            // Easter egg elements (T014)
+            easterEggContainer: document.getElementById('easter-egg-container'),
+            easterEggImg: document.getElementById('easter-egg-img'),
+            easterEggFallback: document.getElementById('easter-egg-fallback'),
             
             // View navigation (T010)
             weatherView: document.getElementById('weather-view'),
@@ -971,6 +989,9 @@
             elements.loadingSpinner.classList.add('hidden');
             elements.errorContainer.classList.add('hidden');
             elements.weatherCard.classList.add('hidden');
+            if (elements.easterEggContainer) {
+                elements.easterEggContainer.classList.add('hidden');
+            }
         }
 
         function showWelcome() {
@@ -1064,6 +1085,30 @@
             setBackgroundEffect(effect);
 
             showWeatherCard();
+
+            // Easter egg display and state re-arming (T015, T018)
+            if (elements.easterEggContainer) {
+                if (weather.easter_egg === 'zidane') {
+                    elements.easterEggContainer.classList.remove('hidden');
+                    if (elements.easterEggFallback) {
+                        elements.easterEggFallback.classList.add('hidden');
+                    }
+                    if (elements.easterEggImg) {
+                        elements.easterEggImg.classList.remove('hidden');
+                        elements.easterEggImg.src = '';
+                        elements.easterEggImg.src = 'https://media.tenor.com/B8gpHhxJOksAAAAM/zidane-shocked.gif';
+                        elements.easterEggImg.alt = 'Zizou approves';
+                    }
+                } else {
+                    elements.easterEggContainer.classList.add('hidden');
+                    if (elements.easterEggImg) {
+                        elements.easterEggImg.src = '';
+                    }
+                    if (elements.easterEggFallback) {
+                        elements.easterEggFallback.classList.add('hidden');
+                    }
+                }
+            }
         }
 
         // ============================================
@@ -1387,6 +1432,16 @@
             
             // Geolocation button event listener (T010)
             elements.locationBtn.addEventListener('click', handleGeolocation);
+
+            // Easter egg image error handler (T017)
+            if (elements.easterEggImg) {
+                elements.easterEggImg.addEventListener('error', () => {
+                    elements.easterEggImg.classList.add('hidden');
+                    if (elements.easterEggFallback) {
+                        elements.easterEggFallback.classList.remove('hidden');
+                    }
+                });
+            }
             
             // Hash routing (T013)
             window.addEventListener('hashchange', handleHashChange);

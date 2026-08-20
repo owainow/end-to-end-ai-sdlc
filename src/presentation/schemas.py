@@ -26,6 +26,7 @@ class WeatherResponse(BaseModel):
                 "icon_code": "03d",
                 "units": "metric",
                 "timestamp": "2024-01-19T15:30:00Z",
+                "easter_egg": None,
             }
         }
     )
@@ -47,7 +48,7 @@ class WeatherResponse(BaseModel):
     timestamp: datetime = Field(..., description="Data timestamp (UTC)")
     easter_egg: str | None = Field(
         default=None,
-        description='Easter-egg indicator ("zidane" for French locations)',
+        description="Easter egg identifier if triggered (e.g. 'zidane'), otherwise null",
     )
 
 

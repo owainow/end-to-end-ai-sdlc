@@ -79,9 +79,7 @@ class InMemoryCache(CachePort):
         """
         with self._lock:
             now = datetime.now(UTC)
-            expired_keys = [
-                key for key, entry in self._store.items() if now > entry.expires_at
-            ]
+            expired_keys = [key for key, entry in self._store.items() if now > entry.expires_at]
             for key in expired_keys:
                 del self._store[key]
             return len(expired_keys)

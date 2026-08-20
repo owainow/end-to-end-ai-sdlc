@@ -72,11 +72,7 @@ class OpenWeatherMapClient(WeatherProviderPort):
                 )
 
                 if response.status_code == 404:
-                    location = (
-                        f"{request.coordinates}"
-                        if request.coordinates
-                        else request.city
-                    )
+                    location = f"{request.coordinates}" if request.coordinates else request.city
                     raise CityNotFoundError(location)
 
                 if response.status_code == 429:
@@ -113,7 +109,7 @@ class OpenWeatherMapClient(WeatherProviderPort):
 
         return WeatherData(
             city_name=data["name"],
-            country=data["sys"]["country"],
+            country=(data.get("sys") or {}).get("country") or "",
             coordinates=Coordinates(
                 latitude=coord["lat"],
                 longitude=coord["lon"],

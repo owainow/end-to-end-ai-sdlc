@@ -81,6 +81,7 @@ paths:
                     description: scattered clouds
                     units: metric
                     timestamp: "2026-01-19T14:30:00Z"
+                    easter_egg: null
         '400':
           description: Validation error (empty city name, invalid units)
           content:
@@ -241,6 +242,11 @@ components:
           format: date-time
           description: Data retrieval timestamp (UTC)
           example: "2026-01-19T14:30:00Z"
+        easter_egg:
+          type: string
+          nullable: true
+          description: Easter egg identifier if triggered (e.g. 'zidane'), otherwise null
+          example: null
 
     Coordinates:
       type: object

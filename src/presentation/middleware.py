@@ -11,9 +11,7 @@ from src.presentation.dependencies import get_logger
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for logging all incoming requests."""
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         """Log request and response details.
 
         Args:

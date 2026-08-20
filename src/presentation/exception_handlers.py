@@ -21,9 +21,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     """
 
     @app.exception_handler(CityNotFoundError)
-    async def city_not_found_handler(
-        request: Request, exc: CityNotFoundError
-    ) -> JSONResponse:
+    async def city_not_found_handler(request: Request, exc: CityNotFoundError) -> JSONResponse:
         """Handle city not found errors."""
         get_logger().warning("City not found", city=exc.city, path=request.url.path)
         return JSONResponse(
@@ -57,9 +55,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(RateLimitExceededError)
-    async def rate_limit_handler(
-        request: Request, exc: RateLimitExceededError
-    ) -> JSONResponse:
+    async def rate_limit_handler(request: Request, exc: RateLimitExceededError) -> JSONResponse:
         """Handle rate limit exceeded errors."""
         get_logger().warning(
             "Rate limit exceeded",
@@ -79,9 +75,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(WeatherProviderError)
-    async def weather_provider_handler(
-        request: Request, exc: WeatherProviderError
-    ) -> JSONResponse:
+    async def weather_provider_handler(request: Request, exc: WeatherProviderError) -> JSONResponse:
         """Handle weather provider errors."""
         get_logger().error(
             "Weather provider error",
@@ -101,9 +95,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(WeatherAppError)
-    async def weather_app_error_handler(
-        request: Request, exc: WeatherAppError
-    ) -> JSONResponse:
+    async def weather_app_error_handler(request: Request, exc: WeatherAppError) -> JSONResponse:
         """Handle generic weather app errors."""
         get_logger().error(
             "Application error", code=exc.code, error=exc.message, path=request.url.path
@@ -120,9 +112,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def unhandled_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle unhandled exceptions."""
         get_logger().error(
             "Unhandled exception",

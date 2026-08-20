@@ -41,9 +41,7 @@ class TestInMemoryCache:
         result = cache.get("nonexistent")
         assert result is None
 
-    def test_set_and_get(
-        self, cache: InMemoryCache, weather_data: WeatherData
-    ) -> None:
+    def test_set_and_get(self, cache: InMemoryCache, weather_data: WeatherData) -> None:
         """Test setting and getting a value."""
         cache.set("test_key", weather_data, ttl_seconds=300)
         result = cache.get("test_key")
