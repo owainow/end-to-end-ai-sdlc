@@ -41,6 +41,14 @@ class WeatherData:
         """Return formatted location string."""
         return f"{self.city_name}, {self.country}"
 
+    @property
+    def easter_egg(self) -> str | None:
+        """Easter-egg indicator derived from the provider's country code.
+
+        French locations (ISO 3166 "FR") celebrate with Zizou.
+        """
+        return "zidane" if self.country == "FR" else None
+
 
 @dataclass(frozen=True)
 class WeatherRequest:

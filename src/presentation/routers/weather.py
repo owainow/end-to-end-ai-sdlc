@@ -111,4 +111,5 @@ async def get_weather(
         icon_code=weather_data.icon_code,
         units=weather_data.units,
         timestamp=weather_data.timestamp,
+        easter_egg=weather_data.easter_egg,
     )
