@@ -84,7 +84,7 @@ class TestRateLimitExceededError:
         """Test rate limit error with default retry time."""
         error = RateLimitExceededError()
         assert error.retry_after_seconds == 60
-        assert error.code == "RATE_LIMIT_EXCEEDED"
+        assert error.code == "RATE_LIMITED"
 
     def test_rate_limit_custom(self) -> None:
         """Test rate limit error with custom retry time."""

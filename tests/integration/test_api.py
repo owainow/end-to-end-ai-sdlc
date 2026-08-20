@@ -467,4 +467,90 @@ class TestWeatherEndpoint:
 
             app.dependency_overrides.clear()
 
+    @pytest.mark.asyncio
+    async def test_get_weather_dual_params_coordinates_not_found(self) -> None:
+        """Test 404 when both city and lat/lon provided sets target='coordinates'."""
+        from src.domain.exceptions import CityNotFoundError
+
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(
+            side_effect=CityNotFoundError("(0.0000, 0.0000)")
+        )
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_weather_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
+                response = await client.get("/api/v1/weather?city=London&lat=0.0&lon=0.0")
+
+                assert response.status_code == 404
+                data = response.json()
+                assert data["error"]["code"] == "CITY_NOT_FOUND"
+                assert data["error"]["target"] == "coordinates"
+
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_weather_provider_error_returns_503(self) -> None:
+        """Test WeatherProviderError yields HTTP 503 with PROVIDER_UNAVAILABLE code."""
+        from src.domain.exceptions import WeatherProviderError
+
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(
+            side_effect=WeatherProviderError("Connection timeout")
+        )
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_weather_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
+                response = await client.get("/api/v1/weather?city=London")
+
+                assert response.status_code == 503
+                data = response.json()
+                assert data["error"]["code"] == "PROVIDER_UNAVAILABLE"
+                assert data["error"]["message"] == "Weather service temporarily unavailable"
+                assert data["error"]["retryAfter"] == 30
+
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_openapi_schema_error_responses_linked(self, test_client: AsyncClient) -> None:
+        """Test that /openapi.json links ErrorResponse schema for error status codes."""
+        response = await test_client.get("/openapi.json")
+        assert response.status_code == 200
+        schema = response.json()
+        weather_get = schema["paths"]["/api/v1/weather"]["get"]
+        responses = weather_get["responses"]
+
+        for status_code in ["400", "404", "422", "429", "500", "503"]:
+            assert status_code in responses
+            content = responses[status_code]["content"]["application/json"]
+            assert "$ref" in content["schema"]
+            assert "ErrorResponse" in content["schema"]["$ref"]
+
+    @pytest.mark.asyncio
+    async def test_docs_openapi_yaml_exists(self) -> None:
+        """Test that /docs/openapi.yaml file exists and is non-empty."""
+        from pathlib import Path
+
+        openapi_path = Path("docs/openapi.yaml")
+        assert openapi_path.exists()
+        assert openapi_path.stat().st_size > 0
+
+
 

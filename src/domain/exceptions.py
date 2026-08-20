@@ -53,7 +53,7 @@ class RateLimitExceededError(WeatherAppError):
         self.retry_after_seconds = retry_after_seconds
         super().__init__(
             message=f"Rate limit exceeded. Retry after {retry_after_seconds} seconds.",
-            code="RATE_LIMIT_EXCEEDED",
+            code="RATE_LIMITED",
         )
 
 

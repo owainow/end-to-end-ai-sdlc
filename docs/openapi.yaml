@@ -1,0 +1,391 @@
+openapi: 3.1.0
+info:
+  title: Weather App API
+  description: Real-time weather data API for cities worldwide
+  version: 1.0.0
+  contact:
+    name: Weather App Team
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://weatherapp.azurewebsites.net
+    description: Azure App Service (production)
+
+tags:
+  - name: Weather
+    description: Weather data operations
+
+paths:
+  /api/v1/weather:
+    get:
+      operationId: getWeather
+      summary: Get current weather for a city
+      description: |
+        Retrieves current weather conditions for the specified city.
+        Supports metric (Celsius) and imperial (Fahrenheit) units.
+        Results are cached for up to 15 minutes.
+      tags:
+        - Weather
+      parameters:
+        - name: city
+          in: query
+          required: false
+          description: City name (supports "city", "city,country", "city,state,country" formats)
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          examples:
+            simple:
+              value: London
+              summary: Simple city name
+            with_country:
+              value: "London,UK"
+              summary: City with country code
+            special_chars:
+              value: "München"
+              summary: City with special characters
+        - name: lat
+          in: query
+          required: false
+          description: Latitude coordinate (-90 to 90)
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+        - name: lon
+          in: query
+          required: false
+          description: Longitude coordinate (-180 to 180)
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+        - name: units
+          in: query
+          required: false
+          description: Temperature units (defaults to metric)
+          schema:
+            type: string
+            enum:
+              - metric
+              - imperial
+            default: metric
+      responses:
+        '200':
+          description: Weather data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeatherResponse'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    city: London
+                    country: GB
+                    coordinates:
+                      latitude: 51.5074
+                      longitude: -0.1278
+                    temperature: 15.2
+                    feels_like: 14.8
+                    humidity: 72
+                    wind_speed: 4.5
+                    pressure: 1013
+                    visibility: 10000
+                    description: scattered clouds
+                    units: metric
+                    timestamp: "2026-01-19T14:30:00Z"
+        '400':
+          description: Validation error (invalid request parameters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_request:
+                  summary: Invalid request
+                  value:
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Invalid request parameters
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
+        '404':
+          description: City not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_found:
+                  summary: City not found
+                  value:
+                    error:
+                      code: CITY_NOT_FOUND
+                      message: "City 'Xyzabc123' was not found"
+                      target: city
+                      details: []
+                      correlationId: req-abc-123
+        '422':
+          description: Unprocessable entity (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_city:
+                  summary: Empty city name
+                  value:
+                    error:
+                      code: UNPROCESSABLE_ENTITY
+                      message: City name cannot be empty
+                      target: city
+                      details: []
+                      correlationId: req-abc-123
+                numeric_city:
+                  summary: Numeric city name
+                  value:
+                    error:
+                      code: UNPROCESSABLE_ENTITY
+                      message: City name must contain letters and cannot consist only of numbers or special characters
+                      target: city
+                      details: []
+                      correlationId: req-abc-123
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rate_limited:
+                  summary: Rate limited
+                  value:
+                    error:
+                      code: RATE_LIMITED
+                      message: Rate limit exceeded. Please retry later.
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
+                      retryAfter: 60
+        '503':
+          description: Weather service unavailable or data stale
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unavailable:
+                  summary: Provider unavailable
+                  value:
+                    error:
+                      code: PROVIDER_UNAVAILABLE
+                      message: Weather service is temporarily unavailable
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
+                      retryAfter: 30
+                stale:
+                  summary: Data too stale
+                  value:
+                    error:
+                      code: DATA_STALE
+                      message: Cached data has expired and provider is unavailable
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
+                      retryAfter: 60
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check endpoint
+      description: Returns service health status
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    WeatherResponse:
+      type: object
+      required:
+        - city
+        - country
+        - coordinates
+        - temperature
+        - feels_like
+        - humidity
+        - wind_speed
+        - pressure
+        - visibility
+        - description
+        - units
+        - timestamp
+      properties:
+        city:
+          type: string
+          description: City name
+          example: London
+        country:
+          type: string
+          description: ISO country code
+          example: GB
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        temperature:
+          type: number
+          format: float
+          description: Current temperature
+          example: 15.2
+        feels_like:
+          type: number
+          format: float
+          description: "Feels like" temperature
+          example: 14.8
+        humidity:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Humidity percentage
+          example: 72
+        wind_speed:
+          type: number
+          format: float
+          minimum: 0
+          description: Wind speed (m/s for metric, mph for imperial)
+          example: 4.5
+        pressure:
+          type: integer
+          minimum: 0
+          description: Atmospheric pressure in hPa
+          example: 1013
+        visibility:
+          type: integer
+          minimum: 0
+          description: Visibility in meters
+          example: 10000
+        description:
+          type: string
+          description: Weather description
+          example: scattered clouds
+        units:
+          type: string
+          enum:
+            - metric
+            - imperial
+          description: Units used in response
+          example: metric
+        timestamp:
+          type: string
+          format: date-time
+          description: Data retrieval timestamp (UTC)
+          example: "2026-01-19T14:30:00Z"
+
+    Coordinates:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Latitude
+          example: 51.5074
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Longitude
+          example: -0.1278
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required:
+        - code
+        - message
+        - correlationId
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - UNPROCESSABLE_ENTITY
+            - CITY_NOT_FOUND
+            - RATE_LIMITED
+            - PROVIDER_UNAVAILABLE
+            - DATA_STALE
+            - INTERNAL_ERROR
+          description: Error code
+          example: UNPROCESSABLE_ENTITY
+        message:
+          type: string
+          description: Human-readable error message
+          example: "City name cannot be empty"
+        target:
+          type: string
+          nullable: true
+          description: Parameter or field that failed validation
+          example: "city"
+        details:
+          type: array
+          items:
+            type: object
+          description: Additional sub-error details
+          example: []
+        correlationId:
+          type: string
+          description: Unique request correlation ID for tracing
+          example: "req-12345678-1234-4321-abcd-1234567890ab"
+        retryAfter:
+          type: integer
+          nullable: true
+          description: Seconds to wait before retrying (if applicable)
+          example: 60
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+          description: Service health status
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+          example: "2026-01-19T14:30:00Z"

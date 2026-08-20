@@ -9,7 +9,7 @@ from src.presentation.dependencies import (
     get_weather_use_case,
     validate_weather_query_params,
 )
-from src.presentation.schemas import WeatherResponse
+from src.presentation.schemas import ErrorResponse, WeatherResponse
 
 router = APIRouter(prefix="/weather", tags=["Weather"])
 
@@ -20,12 +20,13 @@ router = APIRouter(prefix="/weather", tags=["Weather"])
     summary="Get current weather",
     description="Retrieve current weather data for a specified city or coordinates.",
     responses={
-        200: {"description": "Weather data retrieved successfully"},
-        400: {"description": "Invalid request parameters"},
-        404: {"description": "City not found"},
-        422: {"description": "Validation error"},
-        429: {"description": "Rate limit exceeded"},
-        500: {"description": "Internal server error"},
+        200: {"model": WeatherResponse, "description": "Weather data retrieved successfully"},
+        400: {"model": ErrorResponse, "description": "Invalid request parameters"},
+        404: {"model": ErrorResponse, "description": "City not found"},
+        422: {"model": ErrorResponse, "description": "Validation error"},
+        429: {"model": ErrorResponse, "description": "Rate limit exceeded"},
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+        503: {"model": ErrorResponse, "description": "Weather service unavailable"},
     },
 )
 async def get_weather(

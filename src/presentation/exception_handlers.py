@@ -171,12 +171,16 @@ def register_exception_handlers(app: FastAPI) -> None:
             correlation_id=correlation_id,
         )
         target = (
-            "city"
-            if "city" in request.query_params
+            "coordinates"
+            if ("lat" in request.query_params and "lon" in request.query_params)
             else (
-                "coordinates"
-                if "lat" in request.query_params or "lon" in request.query_params
-                else None
+                "city"
+                if "city" in request.query_params
+                else (
+                    "coordinates"
+                    if ("lat" in request.query_params or "lon" in request.query_params)
+                    else None
+                )
             )
         )
         return _create_error_response(
@@ -243,7 +247,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             correlation_id=correlation_id,
         )
         return _create_error_response(
-            status_code=502,
+            status_code=503,
             code="PROVIDER_UNAVAILABLE",
             message="Weather service temporarily unavailable",
             retry_after=30,
