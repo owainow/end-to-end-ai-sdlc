@@ -167,3 +167,37 @@ class TestWeatherData:
     def test_location_display(self, weather_data: WeatherData) -> None:
         """Test location display."""
         assert weather_data.location_display == "London, GB"
+
+
+class TestEasterEgg:
+    """Tests for the French-location easter egg indicator."""
+
+    @staticmethod
+    def _weather(country: str) -> WeatherData:
+        return WeatherData(
+            city_name="Somewhere",
+            country=country,
+            coordinates=Coordinates(latitude=48.8566, longitude=2.3522),
+            temperature=21.0,
+            feels_like=20.5,
+            humidity=60,
+            wind_speed=3.0,
+            pressure=1015,
+            visibility=10000,
+            description="clear sky",
+            icon_code="01d",
+            units=UnitSystem.METRIC,
+            timestamp=datetime.now(UTC),
+        )
+
+    def test_french_location_triggers_zidane(self) -> None:
+        """FR country code sets the zidane easter egg."""
+        assert self._weather("FR").easter_egg == "zidane"
+
+    def test_non_french_location_has_no_easter_egg(self) -> None:
+        """Other country codes do not set the easter egg."""
+        assert self._weather("GB").easter_egg is None
+
+    def test_missing_country_has_no_easter_egg(self) -> None:
+        """An empty country code does not set the easter egg."""
+        assert self._weather("").easter_egg is None
