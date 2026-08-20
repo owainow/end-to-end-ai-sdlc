@@ -36,16 +36,17 @@ def _create_error_response(
     headers: dict[str, str] | None = None,
 ) -> JSONResponse:
     """Construct a standard ErrorResponse JSONResponse."""
-    content = {
-        "error": {
-            "code": code,
-            "message": message,
-            "target": target,
-            "details": details if details is not None else [],
-            "correlationId": correlation_id,
-            "retry_after": retry_after,
-        }
+    error_content: dict[str, Any] = {
+        "code": code,
+        "message": message,
+        "target": target,
+        "details": details if details is not None else [],
+        "correlationId": correlation_id,
     }
+    if retry_after is not None:
+        error_content["retryAfter"] = retry_after
+
+    content = {"error": error_content}
     response_headers = {"x-correlation-id": correlation_id}
     if headers:
         response_headers.update(headers)
@@ -118,19 +119,32 @@ def register_exception_handlers(app: FastAPI) -> None:
         target: str | None = None
         message: str = str(exc.detail)
         details: list[dict[str, Any]] = []
+        code: str | None = None
 
         if isinstance(exc.detail, dict):
             message = str(exc.detail.get("message", "Validation error"))
             target = exc.detail.get("target")
             details = exc.detail.get("details", [])
+            code = exc.detail.get("code")
 
-        code = "UNPROCESSABLE_ENTITY" if exc.status_code == 422 else (
-            "VALIDATION_ERROR" if exc.status_code == 400 else (
-                "NOT_FOUND" if exc.status_code == 404 else (
-                    "RATE_LIMITED" if exc.status_code == 429 else "HTTP_ERROR"
+        if not code:
+            code = (
+                "UNPROCESSABLE_ENTITY"
+                if exc.status_code == 422
+                else (
+                    "VALIDATION_ERROR"
+                    if exc.status_code == 400
+                    else (
+                        "NOT_FOUND"
+                        if exc.status_code == 404
+                        else (
+                            "RATE_LIMITED"
+                            if exc.status_code == 429
+                            else "HTTP_ERROR"
+                        )
+                    )
                 )
             )
-        )
 
         headers = getattr(exc, "headers", None)
 
@@ -156,11 +170,20 @@ def register_exception_handlers(app: FastAPI) -> None:
             path=request.url.path,
             correlation_id=correlation_id,
         )
+        target = (
+            "city"
+            if "city" in request.query_params
+            else (
+                "coordinates"
+                if "lat" in request.query_params or "lon" in request.query_params
+                else None
+            )
+        )
         return _create_error_response(
             status_code=404,
             code=exc.code,
             message=exc.message,
-            target="city",
+            target=target,
             correlation_id=correlation_id,
         )
 

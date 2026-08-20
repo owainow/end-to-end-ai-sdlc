@@ -140,6 +140,14 @@ class TestWeatherEndpoint:
         response = await test_client.get("/api/v1/weather")
 
         assert response.status_code == 422  # Validation error
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert data["error"]["message"] == "Either city or coordinates (lat and lon) must be provided"
+        assert data["error"]["target"] == "city"
+        assert "correlationId" in data["error"]
+        assert response.headers.get("x-correlation-id") == data["error"]["correlationId"]
+        assert "retryAfter" not in data["error"]
+        assert "retry_after" not in data["error"]
 
     @pytest.mark.asyncio
     async def test_get_weather_empty_city(self, test_client: AsyncClient) -> None:
@@ -147,6 +155,14 @@ class TestWeatherEndpoint:
         response = await test_client.get("/api/v1/weather?city=")
 
         assert response.status_code == 422  # Validation error
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert data["error"]["message"] == "City name cannot be empty"
+        assert data["error"]["target"] == "city"
+        assert "correlationId" in data["error"]
+        assert response.headers.get("x-correlation-id") == data["error"]["correlationId"]
+        assert "retryAfter" not in data["error"]
+        assert "retry_after" not in data["error"]
 
     @pytest.mark.asyncio
     async def test_get_weather_city_not_found(self) -> None:
@@ -176,6 +192,7 @@ class TestWeatherEndpoint:
                 assert response.status_code == 404
                 data = response.json()
                 assert data["error"]["code"] == "CITY_NOT_FOUND"
+                assert data["error"]["target"] == "city"
 
             app.dependency_overrides.clear()
 
@@ -205,7 +222,8 @@ class TestWeatherEndpoint:
                 assert response.status_code == 429
                 data = response.json()
                 assert data["error"]["code"] == "RATE_LIMITED"
-                assert data["error"]["retry_after"] == 60
+                assert data["error"]["retryAfter"] == 60
+                assert "retry_after" not in data["error"]
                 assert response.headers.get("Retry-After") == "60"
 
             app.dependency_overrides.clear()
@@ -380,5 +398,73 @@ class TestWeatherEndpoint:
         assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
         assert data["error"]["target"] == "city"
         assert "must contain letters" in data["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_weather_coordinates_not_found(self) -> None:
+        """Test 404 for coordinate lookup sets target='coordinates' instead of 'city'."""
+        from src.domain.exceptions import CityNotFoundError
+
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(
+            side_effect=CityNotFoundError("(0.0000, 0.0000)")
+        )
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_weather_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
+                response = await client.get("/api/v1/weather?lat=0.0&lon=0.0")
+
+                assert response.status_code == 404
+                data = response.json()
+                assert data["error"]["code"] == "CITY_NOT_FOUND"
+                assert data["error"]["target"] == "coordinates"
+
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_http_exception_custom_error_code(self) -> None:
+        """Test that http_exception_handler preserves explicit error code in detail dict."""
+        from fastapi import HTTPException
+
+        mock_use_case = MagicMock()
+        mock_use_case.execute = AsyncMock(
+            side_effect=HTTPException(
+                status_code=422,
+                detail={
+                    "code": "INVALID_COORDINATES",
+                    "message": "Latitude out of range",
+                    "target": "coordinates",
+                },
+            )
+        )
+
+        with patch.dict("os.environ", {"OPENWEATHERMAP_API_KEY": "test_key"}):
+            from src.main import create_app
+            from src.presentation.dependencies import get_weather_use_case
+
+            app = create_app()
+            app.dependency_overrides[get_weather_use_case] = lambda: mock_use_case
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
+                response = await client.get("/api/v1/weather?city=London")
+
+                assert response.status_code == 422
+                data = response.json()
+                assert data["error"]["code"] == "INVALID_COORDINATES"
+                assert data["error"]["message"] == "Latitude out of range"
+                assert data["error"]["target"] == "coordinates"
+
+            app.dependency_overrides.clear()
 
 

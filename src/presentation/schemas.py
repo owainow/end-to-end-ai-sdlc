@@ -53,6 +53,7 @@ class ErrorDetail(BaseModel):
     """Detailed error payload schema."""
 
     model_config = ConfigDict(
+        populate_by_name=True,
         json_schema_extra={
             "example": {
                 "code": "UNPROCESSABLE_ENTITY",
@@ -60,9 +61,8 @@ class ErrorDetail(BaseModel):
                 "target": "city",
                 "details": [],
                 "correlationId": "req-12345678-1234-4321-abcd-1234567890ab",
-                "retry_after": None,
             }
-        }
+        },
     )
 
     code: str = Field(..., description="Error code")
@@ -76,8 +76,11 @@ class ErrorDetail(BaseModel):
     correlationId: str = Field(
         ..., description="Unique request correlation ID for tracing"
     )
-    retry_after: int | None = Field(
-        default=None, description="Seconds to wait before retrying (if applicable)"
+    retryAfter: int | None = Field(
+        default=None,
+        alias="retry_after",
+        serialization_alias="retryAfter",
+        description="Seconds to wait before retrying (if applicable)",
     )
 
 

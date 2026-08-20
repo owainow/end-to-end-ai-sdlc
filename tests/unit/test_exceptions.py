@@ -123,7 +123,18 @@ class TestErrorSchemas:
         assert data["target"] == "city"
         assert data["details"] == []
         assert data["correlationId"] == "req-abc-123"
-        assert data["retry_after"] is None
+        assert data["retryAfter"] is None
+
+    def test_error_detail_schema_with_retry_after(self) -> None:
+        """Test ErrorDetail serialization with camelCase retryAfter property."""
+        detail = ErrorDetail(
+            code="RATE_LIMITED",
+            message="Rate limit exceeded",
+            correlationId="req-abc-123",
+            retryAfter=60,
+        )
+        data = detail.model_dump(by_alias=True)
+        assert data["retryAfter"] == 60
 
     def test_error_response_schema(self) -> None:
         """Test ErrorResponse schema wrapping ErrorDetail."""

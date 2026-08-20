@@ -115,7 +115,6 @@ paths:
                       target: null
                       details: []
                       correlationId: req-abc-123
-                      retry_after: null
         '404':
           description: City not found
           content:
@@ -132,7 +131,6 @@ paths:
                       target: city
                       details: []
                       correlationId: req-abc-123
-                      retry_after: null
         '422':
           description: Unprocessable entity (validation error)
           content:
@@ -179,7 +177,7 @@ paths:
                       target: null
                       details: []
                       correlationId: req-abc-123
-                      retry_after: 60
+                      retryAfter: 60
         '503':
           description: Weather service unavailable or data stale
           content:
@@ -196,7 +194,7 @@ paths:
                       target: null
                       details: []
                       correlationId: req-abc-123
-                      retry_after: 30
+                      retryAfter: 30
                 stale:
                   summary: Data too stale
                   value:
@@ -206,7 +204,7 @@ paths:
                       target: null
                       details: []
                       correlationId: req-abc-123
-                      retry_after: 60
+                      retryAfter: 60
 
   /health:
     get:
@@ -367,7 +365,7 @@ components:
           type: string
           description: Unique request correlation ID for tracing
           example: "req-12345678-1234-4321-abcd-1234567890ab"
-        retry_after:
+        retryAfter:
           type: integer
           nullable: true
           description: Seconds to wait before retrying (if applicable)
