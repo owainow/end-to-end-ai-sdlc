@@ -2,6 +2,8 @@
 
 from functools import lru_cache
 
+from fastapi import HTTPException
+
 from src.application.use_cases import GetWeatherUseCase
 from src.infrastructure.cache import InMemoryCache
 from src.infrastructure.config import get_settings
@@ -49,3 +51,84 @@ def get_weather_use_case() -> GetWeatherUseCase:
         logger=get_logger(),
         cache_ttl_seconds=settings.cache_ttl_seconds,
     )
+
+
+def validate_city_name(city: str) -> str:
+    """Validate and trim city name according to boundary rules.
+
+    Args:
+        city: Raw city query parameter string.
+
+    Returns:
+        Trimmed valid city string.
+
+    Raises:
+        HTTPException: Status 422 if empty, over 100 chars, or contains no letters.
+    """
+    trimmed = city.strip()
+    if not trimmed:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "City name cannot be empty", "target": "city"},
+        )
+    if len(trimmed) > 100:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "City name must not exceed 100 characters", "target": "city"},
+        )
+    if not any(char.isalpha() for char in trimmed):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "City name must contain letters and cannot consist only of numbers or special characters",
+                "target": "city",
+            },
+        )
+    return trimmed
+
+
+def validate_weather_query_params(
+    city: str | None = None,
+    lat: float | None = None,
+    lon: float | None = None,
+) -> tuple[str | None, float | None, float | None]:
+    """Validate query parameters for weather endpoint at the API boundary.
+
+    Enforces:
+    1. Incomplete coordinate check (lat without lon or vice versa).
+    2. City boundary validation if city is provided.
+    3. Requirement of either a valid city or complete coordinates.
+
+    Args:
+        city: Optional city query parameter.
+        lat: Optional latitude query parameter.
+        lon: Optional longitude query parameter.
+
+    Returns:
+        Tuple of (validated_city, lat, lon).
+    """
+    if (lat is None) != (lon is None):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Both lat and lon must be provided together, or neither",
+                "target": "coordinates",
+            },
+        )
+
+    validated_city: str | None = None
+    if city is not None:
+        validated_city = validate_city_name(city)
+
+    has_coords = lat is not None and lon is not None
+    if not validated_city and not has_coords:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Either city or coordinates (lat and lon) must be provided",
+                "target": "city",
+            },
+        )
+
+    return validated_city, lat, lon
+

@@ -52,13 +52,18 @@ class WeatherRequest:
 
     def __post_init__(self) -> None:
         """Validate request parameters."""
-        # Either city or coordinates must be provided
-        if not self.coordinates and (not self.city or not self.city.strip()):
-            msg = "Either city name or coordinates must be provided"
+        trimmed_city = self.city.strip() if self.city else ""
+        if not self.coordinates and not trimmed_city:
+            msg = "Either city or coordinates (lat and lon) must be provided"
             raise ValueError(msg)
-        if self.city and len(self.city) > 100:
-            msg = "City name cannot exceed 100 characters"
-            raise ValueError(msg)
+
+        if trimmed_city:
+            if len(trimmed_city) > 100:
+                msg = "City name must not exceed 100 characters"
+                raise ValueError(msg)
+            if not any(char.isalpha() for char in trimmed_city):
+                msg = "City name must contain letters and cannot consist only of numbers or special characters"
+                raise ValueError(msg)
 
     @property
     def cache_key(self) -> str:

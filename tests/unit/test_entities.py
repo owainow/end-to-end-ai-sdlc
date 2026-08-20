@@ -60,20 +60,20 @@ class TestWeatherRequest:
     def test_empty_city_raises_error(self) -> None:
         """Test that empty city raises ValueError."""
         with pytest.raises(
-            ValueError, match="Either city name or coordinates must be provided"
+            ValueError, match="Either city or coordinates \\(lat and lon\\) must be provided"
         ):
             WeatherRequest(city="")
 
     def test_whitespace_city_raises_error(self) -> None:
         """Test that whitespace-only city raises ValueError."""
         with pytest.raises(
-            ValueError, match="Either city name or coordinates must be provided"
+            ValueError, match="Either city or coordinates \\(lat and lon\\) must be provided"
         ):
             WeatherRequest(city="   ")
 
     def test_long_city_raises_error(self) -> None:
         """Test that city > 100 chars raises ValueError."""
-        with pytest.raises(ValueError, match="cannot exceed 100 characters"):
+        with pytest.raises(ValueError, match="City name must not exceed 100 characters"):
             WeatherRequest(city="a" * 101)
 
     def test_cache_key_generation(self) -> None:
@@ -97,7 +97,7 @@ class TestWeatherRequest:
     def test_empty_city_and_no_coordinates_raises_error(self) -> None:
         """Test that request without city or coordinates raises ValueError."""
         with pytest.raises(
-            ValueError, match="Either city name or coordinates must be provided"
+            ValueError, match="Either city or coordinates \\(lat and lon\\) must be provided"
         ):
             WeatherRequest(city="", coordinates=None)
 

@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from src.application.use_cases import GetWeatherUseCase
 from src.domain.entities import WeatherRequest
 from src.domain.value_objects import Coordinates, UnitSystem
-from src.presentation.dependencies import get_weather_use_case
+from src.presentation.dependencies import (
+    get_weather_use_case,
+    validate_weather_query_params,
+)
 from src.presentation.schemas import WeatherResponse
 
 router = APIRouter(prefix="/weather", tags=["Weather"])
@@ -28,8 +31,6 @@ router = APIRouter(prefix="/weather", tags=["Weather"])
 async def get_weather(
     city: str | None = Query(
         default=None,
-        min_length=1,
-        max_length=100,
         description="City name to get weather for",
         examples=["London", "New York", "Tokyo"],
     ),
@@ -66,31 +67,22 @@ async def get_weather(
     Raises:
         HTTPException: If validation fails or coordinates are incomplete.
     """
-    # Validate coordinate parameters
-    if (lat is None) != (lon is None):
-        raise HTTPException(
-            status_code=422,
-            detail="Both lat and lon must be provided together, or neither",
-        )
+    validated_city, val_lat, val_lon = validate_weather_query_params(
+        city=city, lat=lat, lon=lon
+    )
 
-    # Prefer coordinates over city if both provided
     coordinates = None
-    if lat is not None and lon is not None:
+    if val_lat is not None and val_lon is not None:
         try:
-            coordinates = Coordinates(latitude=lat, longitude=lon)
+            coordinates = Coordinates(latitude=val_lat, longitude=val_lon)
         except ValueError as e:
-            raise HTTPException(status_code=422, detail=str(e)) from e
+            raise HTTPException(
+                status_code=422,
+                detail={"message": str(e), "target": "coordinates"},
+            ) from e
 
-    # Require either coordinates or city
-    if not coordinates and not city:
-        raise HTTPException(
-            status_code=422,
-            detail="Either city or coordinates (lat and lon) must be provided",
-        )
-
-    # Create request with coordinates or city
     request = WeatherRequest(
-        city=city or "", units=units, coordinates=coordinates
+        city=validated_city or "", units=units, coordinates=coordinates
     )
     weather_data = await use_case.execute(request)
 
@@ -112,3 +104,4 @@ async def get_weather(
         units=weather_data.units,
         timestamp=weather_data.timestamp,
     )
+

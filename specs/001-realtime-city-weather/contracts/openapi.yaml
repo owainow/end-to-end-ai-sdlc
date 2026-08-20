@@ -30,7 +30,7 @@ paths:
       parameters:
         - name: city
           in: query
-          required: true
+          required: false
           description: City name (supports "city", "city,country", "city,state,country" formats)
           schema:
             type: string
@@ -46,6 +46,24 @@ paths:
             special_chars:
               value: "München"
               summary: City with special characters
+        - name: lat
+          in: query
+          required: false
+          description: Latitude coordinate (-90 to 90)
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+        - name: lon
+          in: query
+          required: false
+          description: Longitude coordinate (-180 to 180)
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
         - name: units
           in: query
           required: false
@@ -82,18 +100,21 @@ paths:
                     units: metric
                     timestamp: "2026-01-19T14:30:00Z"
         '400':
-          description: Validation error (empty city name, invalid units)
+          description: Validation error (invalid request parameters)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                empty_city:
-                  summary: Empty city name
+                invalid_request:
+                  summary: Invalid request
                   value:
                     error:
                       code: VALIDATION_ERROR
-                      message: City name cannot be empty
+                      message: Invalid request parameters
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
                       retry_after: null
         '404':
           description: City not found
@@ -108,7 +129,35 @@ paths:
                     error:
                       code: CITY_NOT_FOUND
                       message: "City 'Xyzabc123' was not found"
+                      target: city
+                      details: []
+                      correlationId: req-abc-123
                       retry_after: null
+        '422':
+          description: Unprocessable entity (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_city:
+                  summary: Empty city name
+                  value:
+                    error:
+                      code: UNPROCESSABLE_ENTITY
+                      message: City name cannot be empty
+                      target: city
+                      details: []
+                      correlationId: req-abc-123
+                numeric_city:
+                  summary: Numeric city name
+                  value:
+                    error:
+                      code: UNPROCESSABLE_ENTITY
+                      message: City name must contain letters and cannot consist only of numbers or special characters
+                      target: city
+                      details: []
+                      correlationId: req-abc-123
         '429':
           description: Rate limit exceeded
           headers:
@@ -127,6 +176,9 @@ paths:
                     error:
                       code: RATE_LIMITED
                       message: Rate limit exceeded. Please retry later.
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
                       retry_after: 60
         '503':
           description: Weather service unavailable or data stale
@@ -141,6 +193,9 @@ paths:
                     error:
                       code: PROVIDER_UNAVAILABLE
                       message: Weather service is temporarily unavailable
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
                       retry_after: 30
                 stale:
                   summary: Data too stale
@@ -148,6 +203,9 @@ paths:
                     error:
                       code: DATA_STALE
                       message: Cached data has expired and provider is unavailable
+                      target: null
+                      details: []
+                      correlationId: req-abc-123
                       retry_after: 60
 
   /health:
@@ -276,21 +334,39 @@ components:
       required:
         - code
         - message
+        - correlationId
       properties:
         code:
           type: string
           enum:
             - VALIDATION_ERROR
+            - UNPROCESSABLE_ENTITY
             - CITY_NOT_FOUND
             - RATE_LIMITED
             - PROVIDER_UNAVAILABLE
             - DATA_STALE
+            - INTERNAL_ERROR
           description: Error code
-          example: CITY_NOT_FOUND
+          example: UNPROCESSABLE_ENTITY
         message:
           type: string
           description: Human-readable error message
-          example: "City 'Xyzabc123' was not found"
+          example: "City name cannot be empty"
+        target:
+          type: string
+          nullable: true
+          description: Parameter or field that failed validation
+          example: "city"
+        details:
+          type: array
+          items:
+            type: object
+          description: Additional sub-error details
+          example: []
+        correlationId:
+          type: string
+          description: Unique request correlation ID for tracing
+          example: "req-12345678-1234-4321-abcd-1234567890ab"
         retry_after:
           type: integer
           nullable: true

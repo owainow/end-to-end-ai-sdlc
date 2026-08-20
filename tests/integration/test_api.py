@@ -204,7 +204,7 @@ class TestWeatherEndpoint:
 
                 assert response.status_code == 429
                 data = response.json()
-                assert data["error"]["code"] == "RATE_LIMIT_EXCEEDED"
+                assert data["error"]["code"] == "RATE_LIMITED"
                 assert data["error"]["retry_after"] == 60
                 assert response.headers.get("Retry-After") == "60"
 
@@ -247,7 +247,8 @@ class TestWeatherEndpoint:
         response = await test_client.get("/api/v1/weather?lat=51.5074")
         assert response.status_code == 422
         data = response.json()
-        assert "lat and lon must be provided together" in data["detail"]
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert "lat and lon must be provided together" in data["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_get_weather_with_lon_only(self, test_client: AsyncClient) -> None:
@@ -255,7 +256,8 @@ class TestWeatherEndpoint:
         response = await test_client.get("/api/v1/weather?lon=-0.1278")
         assert response.status_code == 422
         data = response.json()
-        assert "lat and lon must be provided together" in data["detail"]
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert "lat and lon must be provided together" in data["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_get_weather_with_invalid_lat(
@@ -264,6 +266,8 @@ class TestWeatherEndpoint:
         """Test weather request with out-of-range lat returns 422."""
         response = await test_client.get("/api/v1/weather?lat=91.0&lon=0.0")
         assert response.status_code == 422
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
 
     @pytest.mark.asyncio
     async def test_get_weather_with_invalid_lon(
@@ -272,6 +276,8 @@ class TestWeatherEndpoint:
         """Test weather request with out-of-range lon returns 422."""
         response = await test_client.get("/api/v1/weather?lat=0.0&lon=181.0")
         assert response.status_code == 422
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
 
     @pytest.mark.asyncio
     async def test_get_weather_coords_preferred_over_city(
@@ -313,7 +319,66 @@ class TestWeatherEndpoint:
         response = await test_client.get("/api/v1/weather")
         assert response.status_code == 422
         data = response.json()
-        assert (
-            "Either city or coordinates" in data["detail"]
-            or "Field required" in str(data)
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert "Either city or coordinates" in data["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_weather_numeric_city(self, test_client: AsyncClient) -> None:
+        """Test weather request with purely numeric city returns 422 with target city."""
+        response = await test_client.get("/api/v1/weather?city=12345")
+        assert response.status_code == 422
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert data["error"]["target"] == "city"
+        assert "must contain letters" in data["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_weather_overlong_city(self, test_client: AsyncClient) -> None:
+        """Test weather request with over 100 char city returns 422."""
+        long_city = "a" * 101
+        response = await test_client.get(f"/api/v1/weather?city={long_city}")
+        assert response.status_code == 422
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert data["error"]["target"] == "city"
+        assert "must not exceed 100 characters" in data["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_correlation_id_propagation(self, test_client: AsyncClient) -> None:
+        """Test that custom x-correlation-id header is preserved in error response."""
+        custom_id = "req-custom-correlation-123"
+        response = await test_client.get(
+            "/api/v1/weather?city=12345",
+            headers={"x-correlation-id": custom_id},
         )
+        assert response.status_code == 422
+        data = response.json()
+        assert response.headers.get("x-correlation-id") == custom_id
+        assert data["error"]["correlationId"] == custom_id
+
+    @pytest.mark.asyncio
+    async def test_generated_correlation_id(self, test_client: AsyncClient) -> None:
+        """Test that generated x-correlation-id is returned when none provided."""
+        response = await test_client.get("/api/v1/weather?city=12345")
+        assert response.status_code == 422
+        data = response.json()
+        cid = response.headers.get("x-correlation-id")
+        assert cid is not None
+        assert cid.startswith("req-")
+        assert data["error"]["correlationId"] == cid
+
+    @pytest.mark.asyncio
+    async def test_dual_params_invalid_city_fails(
+        self, test_client: AsyncClient
+    ) -> None:
+        """Test that providing invalid city alongside valid coords fails on city first."""
+        response = await test_client.get(
+            "/api/v1/weather?city=12345&lat=51.5074&lon=-0.1278"
+        )
+        assert response.status_code == 422
+        data = response.json()
+        assert data["error"]["code"] == "UNPROCESSABLE_ENTITY"
+        assert data["error"]["target"] == "city"
+        assert "must contain letters" in data["error"]["message"]
+
+

@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.domain.value_objects import UnitSystem
@@ -47,25 +49,42 @@ class WeatherResponse(BaseModel):
     timestamp: datetime = Field(..., description="Data timestamp (UTC)")
 
 
-class ErrorResponse(BaseModel):
-    """Error response schema."""
+class ErrorDetail(BaseModel):
+    """Detailed error payload schema."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "error": {
-                    "code": "CITY_NOT_FOUND",
-                    "message": "City not found: InvalidCity",
-                    "retry_after": None,
-                }
+                "code": "UNPROCESSABLE_ENTITY",
+                "message": "City name cannot be empty",
+                "target": "city",
+                "details": [],
+                "correlationId": "req-12345678-1234-4321-abcd-1234567890ab",
+                "retry_after": None,
             }
         }
     )
 
-    error: dict[str, str | int | None] = Field(
-        ...,
-        description="Error details including code, message, and optional retry_after",
+    code: str = Field(..., description="Error code")
+    message: str = Field(..., description="Human-readable error message")
+    target: str | None = Field(
+        default=None, description="Target parameter or field that caused the error"
     )
+    details: list[dict[str, Any]] = Field(
+        default_factory=list, description="Sub-error details"
+    )
+    correlationId: str = Field(
+        ..., description="Unique request correlation ID for tracing"
+    )
+    retry_after: int | None = Field(
+        default=None, description="Seconds to wait before retrying (if applicable)"
+    )
+
+
+class ErrorResponse(BaseModel):
+    """Standard error response schema."""
+
+    error: ErrorDetail
 
 
 class HealthResponse(BaseModel):

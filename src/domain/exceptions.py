@@ -24,12 +24,14 @@ class CityNotFoundError(WeatherAppError):
 class InvalidCityNameError(WeatherAppError):
     """Raised when city name validation fails."""
 
-    def __init__(self, city: str, reason: str) -> None:
+    def __init__(
+        self, city: str, reason: str, code: str = "UNPROCESSABLE_ENTITY"
+    ) -> None:
         self.city = city
         self.reason = reason
         super().__init__(
             message=f"Invalid city name '{city}': {reason}",
-            code="INVALID_CITY_NAME",
+            code=code,
         )
 
 

@@ -1,5 +1,12 @@
-"""Unit tests for domain exceptions."""
+"""Unit tests for domain exceptions, schemas, and presentation exception handlers."""
 
+import uuid
+from unittest.mock import MagicMock
+
+import pytest
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from src.domain.exceptions import (
     CacheError,
@@ -9,6 +16,11 @@ from src.domain.exceptions import (
     WeatherAppError,
     WeatherProviderError,
 )
+from src.presentation.exception_handlers import (
+    _get_correlation_id,
+    register_exception_handlers,
+)
+from src.presentation.schemas import ErrorDetail, ErrorResponse
 
 
 class TestWeatherAppError:
@@ -46,7 +58,7 @@ class TestInvalidCityNameError:
         error = InvalidCityNameError("123City", "contains numbers")
         assert error.city == "123City"
         assert error.reason == "contains numbers"
-        assert error.code == "INVALID_CITY_NAME"
+        assert error.code == "UNPROCESSABLE_ENTITY"
 
 
 class TestWeatherProviderError:
@@ -91,3 +103,67 @@ class TestCacheError:
         assert error.code == "CACHE_ERROR"
         assert "get" in error.message
         assert "Connection refused" in error.message
+
+
+class TestErrorSchemas:
+    """Tests for ErrorDetail and ErrorResponse schemas."""
+
+    def test_error_detail_schema(self) -> None:
+        """Test ErrorDetail serialization."""
+        detail = ErrorDetail(
+            code="UNPROCESSABLE_ENTITY",
+            message="City name cannot be empty",
+            target="city",
+            details=[],
+            correlationId="req-abc-123",
+        )
+        data = detail.model_dump()
+        assert data["code"] == "UNPROCESSABLE_ENTITY"
+        assert data["message"] == "City name cannot be empty"
+        assert data["target"] == "city"
+        assert data["details"] == []
+        assert data["correlationId"] == "req-abc-123"
+        assert data["retry_after"] is None
+
+    def test_error_response_schema(self) -> None:
+        """Test ErrorResponse schema wrapping ErrorDetail."""
+        detail = ErrorDetail(
+            code="VALIDATION_ERROR",
+            message="Invalid input",
+            correlationId="req-xyz-789",
+        )
+        response = ErrorResponse(error=detail)
+        data = response.model_dump()
+        assert "error" in data
+        assert data["error"]["code"] == "VALIDATION_ERROR"
+        assert data["error"]["correlationId"] == "req-xyz-789"
+
+
+class TestCorrelationIdHelper:
+    """Tests for _get_correlation_id helper function."""
+
+    def test_correlation_id_from_request_state(self) -> None:
+        """Test retrieving correlation ID from request.state."""
+        request = MagicMock(spec=Request)
+        request.state.correlation_id = "req-from-state-123"
+        assert _get_correlation_id(request) == "req-from-state-123"
+
+    def test_correlation_id_from_header(self) -> None:
+        """Test retrieving correlation ID from headers when request.state is empty."""
+        request = MagicMock(spec=Request)
+        request.state = MagicMock()
+        del request.state.correlation_id
+        request.headers = {"x-correlation-id": "req-from-header-456"}
+        assert _get_correlation_id(request) == "req-from-header-456"
+
+    def test_correlation_id_fallback_generation(self) -> None:
+        """Test fallback generation of correlation ID if state and header are missing."""
+        request = MagicMock(spec=Request)
+        request.state = MagicMock()
+        del request.state.correlation_id
+        request.headers = {}
+        cid = _get_correlation_id(request)
+        assert cid.startswith("req-")
+        # Ensure it's a valid UUID after prefix
+        uuid_str = cid[4:]
+        assert uuid.UUID(uuid_str)

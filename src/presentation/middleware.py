@@ -1,6 +1,7 @@
 """Request logging middleware."""
 
 import time
+import uuid
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -23,6 +24,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         Returns:
             The response from the handler.
         """
+        correlation_id = (
+            request.headers.get("x-correlation-id") or f"req-{uuid.uuid4()}"
+        )
+        request.state.correlation_id = correlation_id
+
         logger = get_logger()
         start_time = time.perf_counter()
 
@@ -33,6 +39,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             path=request.url.path,
             query_params=str(request.query_params),
             client_ip=request.client.host if request.client else "unknown",
+            correlation_id=correlation_id,
         )
 
         try:
@@ -46,10 +53,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 path=request.url.path,
                 status_code=response.status_code,
                 duration_ms=round(duration_ms, 2),
+                correlation_id=correlation_id,
             )
 
-            # Add timing header
+            # Add timing and correlation headers
             response.headers["X-Response-Time-Ms"] = str(round(duration_ms, 2))
+            response.headers["x-correlation-id"] = correlation_id
             return response
 
         except Exception as e:
@@ -60,5 +69,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 path=request.url.path,
                 error=str(e),
                 duration_ms=round(duration_ms, 2),
+                correlation_id=correlation_id,
             )
             raise
