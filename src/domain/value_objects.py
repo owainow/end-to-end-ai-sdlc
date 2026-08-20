@@ -1,14 +1,69 @@
 """Value objects for the Weather App domain."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class UnitSystem(str, Enum):
+class UnitSystem(StrEnum):
     """Temperature unit systems."""
 
     METRIC = "metric"  # Celsius
     IMPERIAL = "imperial"  # Fahrenheit
+
+
+class WeatherCondition(StrEnum):
+    """Machine-readable weather condition enum."""
+
+    CLEAR = "clear"
+    CLOUDS = "clouds"
+    RAIN = "rain"
+    DRIZZLE = "drizzle"
+    THUNDERSTORM = "thunderstorm"
+    SNOW = "snow"
+    MIST = "mist"
+    SMOKE = "smoke"
+    HAZE = "haze"
+    DUST = "dust"
+    FOG = "fog"
+    SAND = "sand"
+    ASH = "ash"
+    SQUALL = "squall"
+    TORNADO = "tornado"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def from_string(cls, value: str | None) -> "WeatherCondition":
+        """Convert a string condition into a WeatherCondition enum member safely."""
+        if not value:
+            return cls.UNKNOWN
+        normalized = value.strip().lower()
+        try:
+            return cls(normalized)
+        except ValueError:
+            pass
+
+        # Alias / keyword mapping for common weather descriptions
+        aliases: dict[str, WeatherCondition] = {
+            "sun": cls.CLEAR,
+            "sunny": cls.CLEAR,
+            "cloud": cls.CLOUDS,
+            "cloudy": cls.CLOUDS,
+            "overcast": cls.CLOUDS,
+            "storm": cls.THUNDERSTORM,
+            "thunder": cls.THUNDERSTORM,
+            "shower": cls.RAIN,
+            "sleet": cls.SNOW,
+        }
+        for alias, member in aliases.items():
+            if alias in normalized:
+                return member
+
+        for member in cls:
+            if member == cls.UNKNOWN:
+                continue
+            if member.value in normalized or normalized in member.value:
+                return member
+        return cls.UNKNOWN
 
 
 @dataclass(frozen=True)

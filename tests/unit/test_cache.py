@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.domain.entities import WeatherData
+from src.domain.entities import ForecastData, WeatherData
 from src.domain.value_objects import Coordinates, UnitSystem
 from src.infrastructure.cache import InMemoryCache
 
@@ -41,14 +41,12 @@ class TestInMemoryCache:
         result = cache.get("nonexistent")
         assert result is None
 
-    def test_set_and_get(
-        self, cache: InMemoryCache, weather_data: WeatherData
-    ) -> None:
+    def test_set_and_get(self, cache: InMemoryCache, weather_data: WeatherData) -> None:
         """Test setting and getting a value."""
         cache.set("test_key", weather_data, ttl_seconds=300)
         result = cache.get("test_key")
 
-        assert result is not None
+        assert isinstance(result, WeatherData)
         assert result.city_name == "London"
         assert result.temperature == 15.2
 
@@ -124,6 +122,17 @@ class TestInMemoryCache:
         cache.set("london", data2, ttl_seconds=300)
 
         result = cache.get("london")
-        assert result is not None
+        assert isinstance(result, WeatherData)
         assert result.temperature == 20.0
         assert result.description == "sunny"
+
+    def test_set_and_get_forecast_data(
+        self, cache: InMemoryCache, sample_forecast_data: ForecastData
+    ) -> None:
+        """Test caching and retrieving ForecastData."""
+        cache.set("forecast:london:metric", sample_forecast_data, ttl_seconds=900)
+        result = cache.get("forecast:london:metric")
+
+        assert isinstance(result, ForecastData)
+        assert result.city_name == "London"
+        assert len(result.daily_forecasts) == 5

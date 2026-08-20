@@ -1,12 +1,19 @@
 """Weather API router."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
-from src.application.use_cases import GetWeatherUseCase
-from src.domain.entities import WeatherRequest
+from src.application.use_cases import GetForecastUseCase, GetWeatherUseCase
+from src.domain.entities import ForecastRequest, WeatherRequest
 from src.domain.value_objects import Coordinates, UnitSystem
-from src.presentation.dependencies import get_weather_use_case
-from src.presentation.schemas import WeatherResponse
+from src.presentation.dependencies import (
+    get_forecast_use_case,
+    get_weather_use_case,
+)
+from src.presentation.schemas import (
+    DailyForecastResponse,
+    ForecastResponse,
+    WeatherResponse,
+)
 
 router = APIRouter(prefix="/weather", tags=["Weather"])
 
@@ -89,9 +96,7 @@ async def get_weather(
         )
 
     # Create request with coordinates or city
-    request = WeatherRequest(
-        city=city or "", units=units, coordinates=coordinates
-    )
+    request = WeatherRequest(city=city or "", units=units, coordinates=coordinates)
     weather_data = await use_case.execute(request)
 
     return WeatherResponse(
@@ -111,4 +116,69 @@ async def get_weather(
         icon_code=weather_data.icon_code,
         units=weather_data.units,
         timestamp=weather_data.timestamp,
+    )
+
+
+@router.get(
+    "/{city}/forecast",
+    response_model=ForecastResponse,
+    summary="Get 5-day weather forecast",
+    description="Retrieve 5-day daily weather forecast with high/low temperatures and conditions for a specified city.",
+    responses={
+        200: {"description": "5-day forecast retrieved successfully"},
+        400: {"description": "Invalid city name"},
+        404: {"description": "City not found"},
+        422: {"description": "Validation error"},
+        429: {"description": "Rate limit exceeded"},
+        502: {"description": "Weather provider error"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def get_forecast(
+    city: str = Path(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="City name to get 5-day forecast for",
+        examples=["London", "Paris", "Tokyo"],
+    ),
+    units: UnitSystem = Query(
+        default=UnitSystem.METRIC,
+        description="Temperature units: metric (Celsius) or imperial (Fahrenheit)",
+    ),
+    use_case: GetForecastUseCase = Depends(get_forecast_use_case),
+) -> ForecastResponse:
+    """Get 5-day daily weather forecast for a city.
+
+    Args:
+        city: City name path parameter.
+        units: Temperature unit system query parameter.
+        use_case: Injected GetForecastUseCase.
+
+    Returns:
+        ForecastResponse with 5 consecutive daily forecasts.
+    """
+    request = ForecastRequest(city=city, units=units)
+    forecast_data = await use_case.execute(request)
+
+    return ForecastResponse(
+        city=forecast_data.city_name,
+        country=forecast_data.country,
+        coordinates={
+            "latitude": forecast_data.coordinates.latitude,
+            "longitude": forecast_data.coordinates.longitude,
+        },
+        units=forecast_data.units,
+        daily_forecasts=[
+            DailyForecastResponse(
+                date=df.date,
+                temp_min=df.temp_min,
+                temp_max=df.temp_max,
+                condition=df.condition,
+                condition_code=df.condition_code,
+                icon_code=df.icon_code,
+            )
+            for df in forecast_data.daily_forecasts
+        ],
+        timestamp=forecast_data.timestamp,
     )

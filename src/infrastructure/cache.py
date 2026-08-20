@@ -5,14 +5,14 @@ from datetime import UTC, datetime, timedelta
 from threading import Lock
 
 from src.application.interfaces import CachePort
-from src.domain.entities import WeatherData
+from src.domain.entities import ForecastData, WeatherData
 
 
 @dataclass
 class CacheEntry:
     """Cache entry with expiration time."""
 
-    value: WeatherData
+    value: WeatherData | ForecastData
     expires_at: datetime
 
 
@@ -24,14 +24,14 @@ class InMemoryCache(CachePort):
         self._store: dict[str, CacheEntry] = {}
         self._lock = Lock()
 
-    def get(self, key: str) -> WeatherData | None:
-        """Retrieve cached weather data if not expired.
+    def get(self, key: str) -> WeatherData | ForecastData | None:
+        """Retrieve cached weather or forecast data if not expired.
 
         Args:
             key: The cache key.
 
         Returns:
-            Cached WeatherData or None if not found/expired.
+            Cached WeatherData, ForecastData, or None if not found/expired.
         """
         with self._lock:
             entry = self._store.get(key)
@@ -45,12 +45,12 @@ class InMemoryCache(CachePort):
 
             return entry.value
 
-    def set(self, key: str, value: WeatherData, ttl_seconds: int) -> None:
-        """Store weather data with TTL.
+    def set(self, key: str, value: WeatherData | ForecastData, ttl_seconds: int) -> None:
+        """Store weather or forecast data with TTL.
 
         Args:
             key: The cache key.
-            value: The WeatherData to cache.
+            value: The WeatherData or ForecastData to cache.
             ttl_seconds: Time-to-live in seconds.
         """
         with self._lock:
@@ -79,9 +79,7 @@ class InMemoryCache(CachePort):
         """
         with self._lock:
             now = datetime.now(UTC)
-            expired_keys = [
-                key for key, entry in self._store.items() if now > entry.expires_at
-            ]
+            expired_keys = [key for key, entry in self._store.items() if now > entry.expires_at]
             for key in expired_keys:
                 del self._store[key]
             return len(expired_keys)
