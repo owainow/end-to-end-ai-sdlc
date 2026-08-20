@@ -1,166 +1,125 @@
-name: Build and Deploy to Azure Container Apps
+name: Build and Deploy to Cloud Run
 
 on:
   push:
     branches: [main]  # Triggers when PR is merged to main
   pull_request:
     types: [review_requested]
-    branches: [main]  # Triggers when a review is requested on a PR targeting main
+    branches: [main]  # Preview deploy when a review is requested
   workflow_dispatch:   # Manual trigger
+    inputs:
+      canary_percent:
+        description: "Send this % of traffic to the latest revision (blank = 100)"
+        required: false
+        default: ""
 
 env:
-  RESOURCE_GROUP: weatherapp-rg
-  LOCATION: uksouth
-  ACR_NAME: weatherappacr2026
-  CONTAINER_APP_ENV: weatherapp-env
-  CONTAINER_APP_NAME: weatherapp
-  IMAGE_NAME: weatherapp
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: europe-west2
+  AR_REPO: weatherapp
+  SERVICE: weatherapp
+  IMAGE_BASE: europe-west2-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/weatherapp/weatherapp
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
+      - name: Google Cloud auth
+        uses: google-github-actions/auth@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # ============================================
-      # INFRASTRUCTURE SETUP (Idempotent)
-      # ============================================
-      
-      - name: Create Resource Group if not exists
-        run: |
-          if ! az group show --name ${{ env.RESOURCE_GROUP }} &>/dev/null; then
-            echo "Creating resource group..."
-            az group create --name ${{ env.RESOURCE_GROUP }} --location ${{ env.LOCATION }}
-          else
-            echo "Resource group already exists"
-          fi
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
-      - name: Create Container Registry if not exists
-        run: |
-          if ! az acr show --name ${{ env.ACR_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} &>/dev/null; then
-            echo "Creating Azure Container Registry..."
-            az acr create \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --name ${{ env.ACR_NAME }} \
-              --sku Basic \
-              --admin-enabled true
-          else
-            echo "Container Registry already exists"
-            # Ensure admin is enabled for simpler auth
-            az acr update --name ${{ env.ACR_NAME }} --admin-enabled true
-          fi
-
-      - name: Create Container Apps Environment if not exists
-        run: |
-          if ! az containerapp env show --name ${{ env.CONTAINER_APP_ENV }} --resource-group ${{ env.RESOURCE_GROUP }} &>/dev/null; then
-            echo "Creating Container Apps environment..."
-            az containerapp env create \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --name ${{ env.CONTAINER_APP_ENV }} \
-              --location ${{ env.LOCATION }}
-          else
-            echo "Container Apps environment already exists"
-          fi
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       # ============================================
       # BUILD AND PUSH
       # ============================================
-      
-      - name: Login to ACR
-        run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Build and push Docker image
         run: |
-          IMAGE_TAG=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          IMAGE_LATEST=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
-          
+          IMAGE_TAG=${{ env.IMAGE_BASE }}:${{ github.sha }}
+          IMAGE_LATEST=${{ env.IMAGE_BASE }}:latest
+
           docker build -t $IMAGE_TAG -t $IMAGE_LATEST .
           docker push $IMAGE_TAG
           docker push $IMAGE_LATEST
-          
+
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       # ============================================
       # DEPLOY
       # ============================================
 
-      - name: Get ACR credentials
+      # PRs get a tagged, zero-traffic preview revision:
+      # https://pr-<n>---<service>-<hash>.run.app
+      - name: Deploy PR preview (no traffic)
+        if: github.event_name == 'pull_request'
         run: |
-          ACR_USERNAME=$(az acr credential show --name ${{ env.ACR_NAME }} --query username -o tsv)
-          ACR_PASSWORD=$(az acr credential show --name ${{ env.ACR_NAME }} --query "passwords[0].value" -o tsv)
-          echo "::add-mask::$ACR_PASSWORD"
-          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
-          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
-      
-      - name: Deploy to Container Apps
+          gcloud run deploy ${{ env.SERVICE }} \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }} \
+            --image ${{ env.IMAGE_TAG }} \
+            --port 8000 \
+            --allow-unauthenticated \
+            --min-instances 0 --max-instances 3 \
+            --set-secrets OPENWEATHERMAP_API_KEY=openweathermap-api-key:latest \
+            --no-traffic \
+            --tag pr-${{ github.event.pull_request.number }}
+
+      - name: Deploy to Cloud Run (live)
+        if: github.event_name != 'pull_request'
         run: |
-          # Check if app exists
-          if az containerapp show --name ${{ env.CONTAINER_APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} &>/dev/null; then
-            echo "Updating existing Container App..."
-            az containerapp update \
-              --name ${{ env.CONTAINER_APP_NAME }} \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --image ${{ env.IMAGE_TAG }}
-          else
-            echo "Creating new Container App..."
-            az containerapp create \
-              --name ${{ env.CONTAINER_APP_NAME }} \
-              --resource-group ${{ env.RESOURCE_GROUP }} \
-              --environment ${{ env.CONTAINER_APP_ENV }} \
-              --image ${{ env.IMAGE_TAG }} \
-              --registry-server ${{ env.ACR_NAME }}.azurecr.io \
-              --registry-username ${{ env.ACR_USERNAME }} \
-              --registry-password ${{ env.ACR_PASSWORD }} \
-              --target-port 8000 \
-              --ingress external \
-              --env-vars OPENWEATHERMAP_API_KEY=secretref:openweathermap-api-key \
-              --secrets openweathermap-api-key=${{ secrets.OPENWEATHERMAP_API_KEY }} \
-              --min-replicas 0 \
-              --max-replicas 3
-          fi
+          gcloud run deploy ${{ env.SERVICE }} \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }} \
+            --image ${{ env.IMAGE_TAG }} \
+            --port 8000 \
+            --allow-unauthenticated \
+            --min-instances 0 --max-instances 3 \
+            --set-secrets OPENWEATHERMAP_API_KEY=openweathermap-api-key:latest
+
+      # A/B: workflow_dispatch with canary_percent=10 sends 10% of traffic
+      # to the newest revision and keeps the rest on the previous one.
+      - name: Apply canary traffic split
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.canary_percent != ''
+        run: |
+          gcloud run services update-traffic ${{ env.SERVICE }} \
+            --project ${{ env.PROJECT_ID }} \
+            --region ${{ env.REGION }} \
+            --to-latest=${{ github.event.inputs.canary_percent }}
 
       - name: Get App URL and Revision URL
         run: |
-          # Get the live app URL
-          APP_URL=$(az containerapp show \
-            --name ${{ env.CONTAINER_APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
-          
-          # Get the latest revision name
-          REVISION_NAME=$(az containerapp show \
-            --name ${{ env.CONTAINER_APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query "properties.latestRevisionName" -o tsv)
-          
-          # Get the revision-specific URL
-          REVISION_FQDN=$(az containerapp revision show \
-            --name ${{ env.CONTAINER_APP_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --revision $REVISION_NAME \
-            --query "properties.fqdn" -o tsv)
-          
+          APP_URL=$(gcloud run services describe ${{ env.SERVICE }} \
+            --project ${{ env.PROJECT_ID }} --region ${{ env.REGION }} \
+            --format "value(status.url)")
+
+          REVISION_NAME=$(gcloud run services describe ${{ env.SERVICE }} \
+            --project ${{ env.PROJECT_ID }} --region ${{ env.REGION }} \
+            --format "value(status.latestCreatedRevisionName)")
+
           echo "🚀 **Deployment Complete**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| URL Type | Link |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🌐 Live URL | https://$APP_URL |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📌 Revision URL | https://$REVISION_FQDN |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏷️ Revision Name | \`$REVISION_NAME\` |" >> $GITHUB_STEP_SUMMARY
-          echo ""
-          echo "🚀 Live URL: https://$APP_URL"
-          echo "📌 Revision URL: https://$REVISION_FQDN"
+          echo "| 🌐 Live URL | $APP_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏷️ Revision | \`$REVISION_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PREVIEW_URL=$(gcloud run services describe ${{ env.SERVICE }} \
+              --project ${{ env.PROJECT_ID }} --region ${{ env.REGION }} \
+              --format json | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((t['url'] for t in d['status'].get('traffic',[]) if t.get('tag')=='pr-${{ github.event.pull_request.number }}'), ''))")
+            echo "| 📌 PR preview (0% traffic) | $PREVIEW_URL |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "🚀 Live URL: $APP_URL"
           echo "🏷️ Revision: $REVISION_NAME"
