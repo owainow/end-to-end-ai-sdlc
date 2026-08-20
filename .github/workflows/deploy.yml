@@ -22,6 +22,7 @@ env:
 
 permissions:
   contents: read
+  id-token: write  # OIDC token for Workload Identity Federation
 
 jobs:
   build-and-deploy:
@@ -34,7 +35,8 @@ jobs:
       - name: Google Cloud auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
