@@ -92,7 +92,8 @@ async def get_weather(
     request = WeatherRequest(
         city=city or "", units=units, coordinates=coordinates
     )
-    weather_data = await use_case.execute(request)
+    result = await use_case.execute(request)
+    weather_data = result.weather_data
 
     return WeatherResponse(
         city=weather_data.city_name,
@@ -111,4 +112,5 @@ async def get_weather(
         icon_code=weather_data.icon_code,
         units=weather_data.units,
         timestamp=weather_data.timestamp,
+        easter_egg=result.easter_egg,
     )

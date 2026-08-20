@@ -113,7 +113,7 @@ class OpenWeatherMapClient(WeatherProviderPort):
 
         return WeatherData(
             city_name=data["name"],
-            country=data["sys"]["country"],
+            country=(data.get("sys") or {}).get("country") or "",
             coordinates=Coordinates(
                 latitude=coord["lat"],
                 longitude=coord["lon"],

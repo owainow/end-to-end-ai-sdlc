@@ -1,7 +1,8 @@
 """Get Weather use case implementation."""
 
+from src.application.dto import WeatherResult
 from src.application.interfaces import CachePort, LoggerPort, WeatherProviderPort
-from src.domain.entities import WeatherData, WeatherRequest
+from src.domain.entities import WeatherRequest
 
 
 class GetWeatherUseCase:
@@ -27,14 +28,14 @@ class GetWeatherUseCase:
         self._logger = logger
         self._cache_ttl = cache_ttl_seconds
 
-    async def execute(self, request: WeatherRequest) -> WeatherData:
+    async def execute(self, request: WeatherRequest) -> WeatherResult:
         """Execute the get weather use case.
 
         Args:
             request: The weather request.
 
         Returns:
-            WeatherData with current conditions.
+            WeatherResult containing weather data and optional easter egg identifier.
 
         Raises:
             CityNotFoundError: If city not found.
@@ -52,26 +53,29 @@ class GetWeatherUseCase:
                 units=request.units.value,
                 cache_key=cache_key,
             )
-            return cached_data
+            weather_data = cached_data
+        else:
+            self._logger.debug(
+                "Cache miss, fetching from provider",
+                city=request.city,
+                units=request.units.value,
+            )
 
-        self._logger.debug(
-            "Cache miss, fetching from provider",
-            city=request.city,
-            units=request.units.value,
-        )
+            # Fetch from provider
+            weather_data = await self._provider.get_weather(request)
 
-        # Fetch from provider
-        weather_data = await self._provider.get_weather(request)
+            # Cache the result
+            self._cache.set(cache_key, weather_data, self._cache_ttl)
+            self._logger.info(
+                "Weather data fetched and cached",
+                city=weather_data.city_name,
+                country=weather_data.country,
+                temperature=weather_data.temperature,
+                units=weather_data.units.value,
+                cache_ttl=self._cache_ttl,
+            )
 
-        # Cache the result
-        self._cache.set(cache_key, weather_data, self._cache_ttl)
-        self._logger.info(
-            "Weather data fetched and cached",
-            city=weather_data.city_name,
-            country=weather_data.country,
-            temperature=weather_data.temperature,
-            units=weather_data.units.value,
-            cache_ttl=self._cache_ttl,
-        )
+        country_code = (weather_data.country or "").strip().upper()
+        easter_egg = "zidane" if country_code == "FR" else None
 
-        return weather_data
+        return WeatherResult(weather_data=weather_data, easter_egg=easter_egg)

@@ -1,5 +1,6 @@
 """Application layer exports."""
 
+from src.application.dto import WeatherResult
 from src.application.interfaces import CachePort, LoggerPort, WeatherProviderPort
 from src.application.use_cases import GetWeatherUseCase
 
@@ -8,4 +9,6 @@ __all__ = [
     "GetWeatherUseCase",
     "LoggerPort",
     "WeatherProviderPort",
+    "WeatherResult",
 ]
+

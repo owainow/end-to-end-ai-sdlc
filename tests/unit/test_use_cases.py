@@ -80,8 +80,9 @@ class TestGetWeatherUseCase:
         request = WeatherRequest(city="London")
         result = await use_case.execute(request)
 
-        assert result.city_name == "London"
-        assert result.temperature == 15.2
+        assert result.weather_data.city_name == "London"
+        assert result.weather_data.temperature == 15.2
+        assert result.easter_egg is None
         mock_provider.get_weather.assert_called_once_with(request)
         mock_cache.set.assert_called_once()
 
@@ -99,7 +100,8 @@ class TestGetWeatherUseCase:
         request = WeatherRequest(city="London")
         result = await use_case.execute(request)
 
-        assert result.city_name == "London"
+        assert result.weather_data.city_name == "London"
+        assert result.easter_egg is None
         mock_provider.get_weather.assert_not_called()
         mock_cache.set.assert_not_called()
 
@@ -121,3 +123,51 @@ class TestGetWeatherUseCase:
 
         assert exc_info.value.city == "InvalidCity"
         mock_cache.set.assert_not_called()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("country_code", "expected_easter_egg"),
+        [
+            ("FR", "zidane"),
+            ("fr", "zidane"),
+            (" FR ", "zidane"),
+            ("Fr", "zidane"),
+            ("GB", None),
+            ("US", None),
+            ("DE", None),
+            ("", None),
+            ("   ", None),
+        ],
+    )
+    async def test_execute_easter_egg_evaluation(
+        self,
+        use_case: GetWeatherUseCase,
+        mock_provider: MagicMock,
+        mock_cache: MagicMock,
+        country_code: str,
+        expected_easter_egg: str | None,
+    ) -> None:
+        """Test easter egg evaluation for various country codes."""
+        mock_cache.get.return_value = None
+        data = WeatherData(
+            city_name="TestCity",
+            country=country_code,
+            coordinates=Coordinates(latitude=48.8566, longitude=2.3522),
+            temperature=20.0,
+            feels_like=20.0,
+            humidity=50,
+            wind_speed=3.0,
+            pressure=1015,
+            visibility=10000,
+            description="clear sky",
+            icon_code="01d",
+            units=UnitSystem.METRIC,
+            timestamp=datetime.now(UTC),
+        )
+        mock_provider.get_weather.return_value = data
+
+        request = WeatherRequest(city="TestCity")
+        result = await use_case.execute(request)
+
+        assert result.easter_egg == expected_easter_egg
+        assert result.weather_data.country == country_code
