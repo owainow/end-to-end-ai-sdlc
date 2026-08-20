@@ -97,7 +97,7 @@ jobs:
           gcloud run services update-traffic ${{ env.SERVICE }} \
             --project ${{ env.PROJECT_ID }} \
             --region ${{ env.REGION }} \
-            --to-latest=${{ github.event.inputs.canary_percent }}
+            --to-revisions=LATEST=${{ github.event.inputs.canary_percent }}
 
       - name: Get App URL and Revision URL
         run: |
