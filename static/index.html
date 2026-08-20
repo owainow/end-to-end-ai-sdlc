@@ -329,9 +329,11 @@
                     <!-- Location Header -->
                     <div class="text-center mb-6">
                         <div id="easter-egg" class="hidden mb-4 text-center">
+                            <!-- src + onerror are set from JS: an empty src
+                                 attribute fires the error event at parse time
+                                 and would replace the img before it loads -->
                             <img id="easter-egg-img" class="mx-auto rounded-lg max-h-48"
-                                 src="" alt="Zizou approves"
-                                 onerror="this.outerHTML='<p class=&quot;text-2xl&quot;>🇫🇷 Zizou approves</p>'" />
+                                 alt="Zizou approves" />
                         </div>
                         <h2 id="city-name" class="text-2xl md:text-3xl font-semibold text-gray-800"></h2>
                     </div>
@@ -1024,6 +1026,9 @@
             const eggImg = document.getElementById('easter-egg-img');
             if (weather.easter_egg === 'zidane' && eggContainer) {
                 if (eggImg) {
+                    eggImg.onerror = () => {
+                        eggImg.outerHTML = '<p class="text-2xl">🇫🇷 Zizou approves</p>';
+                    };
                     eggImg.src = 'https://media.tenor.com/B8gpHhxJOksAAAAM/zidane-shocked.gif';
                 }
                 eggContainer.classList.remove('hidden');
